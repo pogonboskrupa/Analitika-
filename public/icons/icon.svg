@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="80" fill="#16a34a"/>
+  <!-- Tree trunk -->
+  <rect x="228" y="340" width="56" height="100" fill="#92400e" rx="4"/>
+  <!-- Tree layers -->
+  <polygon points="256,60 140,220 372,220" fill="#bbf7d0"/>
+  <polygon points="256,120 120,300 392,300" fill="#4ade80"/>
+  <polygon points="256,180 100,370 412,370" fill="#16a34a"/>
+  <!-- Chart bar overlay for analytics feel -->
+  <rect x="60" y="400" width="28" height="52" fill="#86efac" rx="3" opacity="0.8"/>
+  <rect x="96" y="370" width="28" height="82" fill="#4ade80" rx="3" opacity="0.8"/>
+  <rect x="132" y="350" width="28" height="102" fill="#22c55e" rx="3" opacity="0.8"/>
+</svg>
