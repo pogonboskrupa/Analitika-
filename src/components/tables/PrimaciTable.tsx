@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { formatNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { PrimacSummary } from "@/lib/types";
@@ -129,7 +127,7 @@ export function PrimaciTable({ data }: PrimaciTableProps) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Link
-                    href={`/primaci/${encodeURIComponent(row.primac)}`}
+                    to={`/primaci/${encodeURIComponent(row.primac)}`}
                     className="text-xs font-medium text-forest-600 dark:text-forest-400 hover:underline whitespace-nowrap"
                   >
                     Detalji →
