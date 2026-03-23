@@ -1,11 +1,6 @@
 import { Suspense } from "react";
 import { getPrimkaData, getOtpremaData } from "@/lib/sheets";
-import {
-  aggregateDailyTotals,
-  getQuickSelectRange,
-  formatNumber,
-} from "@/lib/utils";
-import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { aggregateDailyTotals, getQuickSelectRange } from "@/lib/utils";
 import { TrendoviCharts } from "./TrendoviCharts";
 
 export const dynamic = "force-dynamic";

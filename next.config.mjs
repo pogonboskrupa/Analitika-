@@ -1,5 +1,3 @@
-import type { NextConfig } from "next";
-// @ts-ignore – @ducanh2912/next-pwa types may not match perfectly with TS config files
 import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
@@ -13,7 +11,8 @@ const withPWA = withPWAInit({
   },
 });
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   experimental: {
     typedRoutes: false,
   },

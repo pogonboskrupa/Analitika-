@@ -9,7 +9,6 @@ import {
   getTotalLiscare,
   getQuickSelectRange,
 } from "@/lib/utils";
-import { StatsCard } from "@/components/StatsCard";
 import { DashboardCharts } from "./DashboardCharts";
 
 export const dynamic = "force-dynamic";
