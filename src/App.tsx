@@ -11,7 +11,7 @@ export default function App() {
     <SheetProvider>
       <div className="flex min-h-screen">
         <Navigation />
-        <main className="flex-1 md:ml-64 min-h-screen bg-gray-50 dark:bg-gray-950">
+        <main className="flex-1 md:ml-64 min-h-screen bg-gray-50 dark:bg-gray-950 pt-14 md:pt-0">
           <div className="p-4 md:p-6 max-w-7xl mx-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
