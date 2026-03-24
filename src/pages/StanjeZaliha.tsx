@@ -48,7 +48,7 @@ function sumOtpremaField(rows: OtpremaRow[], key: keyof OtpremaRow): number {
 
 export default function StanjeZaliha() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('all'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
   const filteredPrimka = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
   const filteredOtprema = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])
