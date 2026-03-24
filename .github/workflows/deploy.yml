@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [claude/forestry-analytics-app-3k4HO]
 
 permissions:
   contents: write
