@@ -32,7 +32,7 @@ export function getQuickSelectRange(qs: QuickSelect): DateRange {
     case "ytd":
       return { from: startOfYear(today), to: today };
     case "all":
-      return { from: new Date(2000, 0, 1), to: today };
+      return { from: new Date(2023, 0, 1), to: today };
   }
 }
 

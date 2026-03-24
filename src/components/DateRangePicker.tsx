@@ -82,6 +82,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           type="date"
           value={toInputValue(value.from)}
           onChange={handleFromChange}
+          min="2023-01-01"
           max={toInputValue(value.to)}
           className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-forest-400 dark:focus:ring-forest-500"
         />
