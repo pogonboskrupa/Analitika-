@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { getLastNDaysRange } from "@/lib/utils";
 import type { DateRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -22,8 +22,14 @@ function fromInputValue(str: string): Date | null {
   return new Date(year, month - 1, day);
 }
 
+function getYesterday(): Date {
+  const now = new Date();
+  return subDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1);
+}
+
 export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   const [activeDay, setActiveDay] = useState<number | null>(null);
+  const yesterday = getYesterday();
 
   function handleQuick(days: number) {
     setActiveDay(days);
@@ -47,49 +53,56 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Quick select buttons */}
-      <div className="flex items-center gap-1">
-        {QUICK_DAYS.map((d) => (
-          <button
-            key={d}
-            onClick={() => handleQuick(d)}
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-150",
-              activeDay === d
-                ? "bg-forest-600 text-white border-forest-600 dark:bg-forest-500 dark:border-forest-500"
-                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-forest-400 hover:text-forest-600 dark:hover:text-forest-400"
-            )}
-          >
-            {d}d
-          </button>
-        ))}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Quick select buttons */}
+        <div className="flex items-center gap-1">
+          {QUICK_DAYS.map((d) => (
+            <button
+              key={d}
+              onClick={() => handleQuick(d)}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-150",
+                activeDay === d
+                  ? "bg-forest-600 text-white border-forest-600 dark:bg-forest-500 dark:border-forest-500"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-forest-400 hover:text-forest-600 dark:hover:text-forest-400"
+              )}
+            >
+              {d}d
+            </button>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <span className="text-gray-300 dark:text-gray-600 select-none">|</span>
+
+        {/* Custom date range */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Od:</label>
+          <input
+            type="date"
+            value={toInputValue(value.from)}
+            onChange={handleFromChange}
+            min="2023-01-01"
+            max={toInputValue(value.to)}
+            className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-forest-400 dark:focus:ring-forest-500"
+          />
+          <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Do:</label>
+          <input
+            type="date"
+            value={toInputValue(value.to)}
+            onChange={handleToChange}
+            min={toInputValue(value.from)}
+            max={toInputValue(yesterday)}
+            className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-forest-400 dark:focus:ring-forest-500"
+          />
+        </div>
       </div>
 
-      {/* Divider */}
-      <span className="text-gray-300 dark:text-gray-600 select-none">|</span>
-
-      {/* Custom date range */}
-      <div className="flex items-center gap-2">
-        <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Od:</label>
-        <input
-          type="date"
-          value={toInputValue(value.from)}
-          onChange={handleFromChange}
-          min="2023-01-01"
-          max={toInputValue(value.to)}
-          className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-forest-400 dark:focus:ring-forest-500"
-        />
-        <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Do:</label>
-        <input
-          type="date"
-          value={toInputValue(value.to)}
-          onChange={handleToChange}
-          min={toInputValue(value.from)}
-          max={toInputValue(new Date())}
-          className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-forest-400 dark:focus:ring-forest-500"
-        />
-      </div>
+      {/* Period label */}
+      <p className="text-xs text-gray-400 dark:text-gray-500 font-medium pl-0.5">
+        Period: {format(value.from, "dd.MM.yyyy")} – {format(value.to, "dd.MM.yyyy")}
+      </p>
     </div>
   );
 }

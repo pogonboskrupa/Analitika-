@@ -21,25 +21,27 @@ export function formatDate(date: Date): string {
 export function getQuickSelectRange(qs: QuickSelect): DateRange {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = subDays(today, 1);
 
   switch (qs) {
     case "7d":
-      return { from: subDays(today, 6), to: today };
+      return { from: subDays(yesterday, 6), to: yesterday };
     case "30d":
-      return { from: subDays(today, 29), to: today };
+      return { from: subDays(yesterday, 29), to: yesterday };
     case "90d":
-      return { from: subDays(today, 89), to: today };
+      return { from: subDays(yesterday, 89), to: yesterday };
     case "ytd":
-      return { from: startOfYear(today), to: today };
+      return { from: startOfYear(today), to: yesterday };
     case "all":
-      return { from: new Date(2023, 0, 1), to: today };
+      return { from: new Date(2023, 0, 1), to: yesterday };
   }
 }
 
 export function getLastNDaysRange(n: number): DateRange {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return { from: subDays(today, n - 1), to: today };
+  const yesterday = subDays(today, 1);
+  return { from: subDays(yesterday, n - 1), to: yesterday };
 }
 
 export function dateRangeToParams(range: DateRange): string {
@@ -50,9 +52,12 @@ export function filterByDateRange<T extends { datum: Date }>(
   rows: T[],
   range: DateRange
 ): T[] {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return rows.filter((row) => {
     const d = row.datum;
     if (d < range.from || d > range.to) return false;
+    if (d >= todayStart) return false; // Uvijek izuzmi današnji dan
     const day = d.getDay();
     // Exclude Sunday always; Saturday only appears if it has data (working Saturday)
     return day !== 0;
