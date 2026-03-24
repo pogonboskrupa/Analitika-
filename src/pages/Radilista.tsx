@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { StatsCard } from '@/components/StatsCard'
@@ -150,6 +151,7 @@ export default function Radilista() {
                       <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Četinari (m³)</th>
                       <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Lišćari (m³)</th>
                       <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Ukupno (m³)</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Detail</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -161,6 +163,14 @@ export default function Radilista() {
                         <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatNumber(row.totalCetinari)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatNumber(row.totalLiscare)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums font-semibold text-gray-800 dark:text-gray-100">{formatNumber(row.totalUkupno)}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <Link
+                            to={`/radilista/izvođač/${encodeURIComponent(row.izvođač)}`}
+                            className="text-xs font-medium text-forest-600 dark:text-forest-400 hover:underline whitespace-nowrap"
+                          >
+                            Detalji →
+                          </Link>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

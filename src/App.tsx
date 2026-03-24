@@ -7,6 +7,7 @@ import PrimacDetail from './pages/PrimacDetail'
 import Trendovi from './pages/Trendovi'
 import Otprema from './pages/Otprema'
 import Radilista from './pages/Radilista'
+import IzvođačDetail from './pages/IzvođačDetail'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="/trendovi" element={<Trendovi />} />
               <Route path="/otprema" element={<Otprema />} />
               <Route path="/radilista" element={<Radilista />} />
+              <Route path="/radilista/izvođač/:id" element={<IzvođačDetail />} />
             </Routes>
           </div>
         </main>
