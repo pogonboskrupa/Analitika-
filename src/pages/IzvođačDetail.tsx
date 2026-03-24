@@ -25,7 +25,7 @@ export default function IzvođačDetail() {
   const { id } = useParams<{ id: string }>()
   const izvođačName = id ? decodeURIComponent(id) : ''
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
   const izvođačRows = useMemo(
     () => primkaRows.filter((r) => r.izvođač === izvođačName),

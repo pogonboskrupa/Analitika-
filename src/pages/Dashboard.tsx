@@ -32,7 +32,7 @@ function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
 
 export default function Dashboard() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
   const [periodDays, setPeriodDays] = useState(7)
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])

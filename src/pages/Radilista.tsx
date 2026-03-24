@@ -16,7 +16,7 @@ import type { DateRange } from '@/lib/types'
 
 export default function Radilista() {
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
 

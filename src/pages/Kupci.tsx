@@ -18,7 +18,7 @@ import type { DateRange } from '@/lib/types'
 
 export default function Kupci() {
   const { otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])

@@ -22,7 +22,7 @@ export default function PrimacDetail() {
   const { id } = useParams<{ id: string }>()
   const primacName = id ? decodeURIComponent(id) : ''
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
   const primacRows: PrimkaRow[] = useMemo(
     () => primkaRows.filter((r) => r.primac === primacName),

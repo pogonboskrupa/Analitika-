@@ -20,7 +20,7 @@ import type { DateRange } from '@/lib/types'
 
 export default function Otprema() {
   const { otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
   const filteredOtprema = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])
 
