@@ -10,6 +10,7 @@ import Radilista from './pages/Radilista'
 import IzvođačDetail from './pages/IzvođačDetail'
 import Kupci from './pages/Kupci'
 import KupacDetail from './pages/KupacDetail'
+import StanjeZaliha from './pages/StanjeZaliha'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="/radilista/izvođač/:id" element={<IzvođačDetail />} />
               <Route path="/kupci" element={<Kupci />} />
               <Route path="/kupci/:id" element={<KupacDetail />} />
+              <Route path="/zalihe" element={<StanjeZaliha />} />
             </Routes>
           </div>
         </main>

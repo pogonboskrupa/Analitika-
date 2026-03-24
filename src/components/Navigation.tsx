@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { useSheet } from '@/context/SheetContext'
 
 const navItems = [
   {
@@ -67,6 +68,16 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: '/zalihe',
+    label: 'Stanje Zaliha',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <path d="M9 22V12h6v10" />
+      </svg>
+    ),
+  },
 ]
 
 function ThemeToggle() {
@@ -105,6 +116,7 @@ function ThemeToggle() {
 export function Navigation() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { lastUpdated } = useSheet()
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
@@ -189,8 +201,15 @@ export function Navigation() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <p className="text-xs text-gray-400 dark:text-gray-500">Sječa &amp; Otprema</p>
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400 dark:text-gray-500">Sječa &amp; Otprema</p>
+            {lastUpdated && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate" title={lastUpdated.toLocaleString('bs-BA')}>
+                Ažurirano: {lastUpdated.toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
           <ThemeToggle />
         </div>
       </aside>

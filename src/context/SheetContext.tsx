@@ -7,6 +7,7 @@ interface SheetContextValue {
   otpremaRows: OtpremaRow[]
   loading: boolean
   error: string | null
+  lastUpdated: Date | null
   refetch: () => void
 }
 
@@ -17,6 +18,7 @@ export function SheetProvider({ children }: { children: React.ReactNode }) {
   const [otpremaRows, setOtpremaRows] = useState<OtpremaRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -28,6 +30,7 @@ export function SheetProvider({ children }: { children: React.ReactNode }) {
       ])
       setPrimkaRows(parsePrimkaRows(primkaCsv))
       setOtpremaRows(parseOtpremaRows(otpremaCsv))
+      setLastUpdated(new Date())
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       if (
@@ -53,7 +56,7 @@ export function SheetProvider({ children }: { children: React.ReactNode }) {
   }, [loadData])
 
   return (
-    <SheetContext.Provider value={{ primkaRows, otpremaRows, loading, error, refetch: loadData }}>
+    <SheetContext.Provider value={{ primkaRows, otpremaRows, loading, error, lastUpdated, refetch: loadData }}>
       {children}
     </SheetContext.Provider>
   )
