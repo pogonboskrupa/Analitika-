@@ -66,7 +66,7 @@ export function VolumeBarChart({
       )}
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
           <XAxis
             dataKey="name"
             tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -89,14 +89,12 @@ export function VolumeBarChart({
             <Legend
               wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
               formatter={(value: string) => (
-                <span style={{ color: "#6b7280" }}>
-                  {value.charAt(0).toUpperCase() + value.slice(1)}
-                </span>
+                <span style={{ color: "#6b7280", fontSize: "12px" }}>{value}</span>
               )}
             />
           )}
-          <Bar dataKey="cetinari" name="cetinari" fill="#16a34a" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="liscare" name="lišćari" fill="#4ade80" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="cetinari" name="Četinari" fill="#1d4ed8" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="liscare" name="Lišćari" fill="#ea580c" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

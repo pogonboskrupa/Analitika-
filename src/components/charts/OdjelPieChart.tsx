@@ -16,16 +16,16 @@ interface OdjelPieChartProps {
 }
 
 const COLORS = [
-  "#16a34a",
-  "#15803d",
-  "#166534",
-  "#4ade80",
-  "#86efac",
-  "#bbf7d0",
-  "#22c55e",
-  "#14532d",
-  "#052e16",
-  "#dcfce7",
+  "#1d4ed8", // blue-700
+  "#16a34a", // green-600
+  "#ea580c", // orange-600
+  "#7c3aed", // violet-600
+  "#0891b2", // cyan-600
+  "#dc2626", // red-600
+  "#0d9488", // teal-600
+  "#d97706", // amber-600
+  "#db2777", // pink-600
+  "#65a30d", // lime-600
 ];
 
 interface TooltipProps {
@@ -103,8 +103,11 @@ export function OdjelPieChart({ data, title, height = 300 }: OdjelPieChartProps)
             cx="50%"
             cy="50%"
             outerRadius="75%"
+            innerRadius="35%"
             labelLine={false}
             label={CustomLabel as React.FC<object>}
+            strokeWidth={2}
+            stroke="#fff"
           >
             {chartData.map((entry, index) => (
               <Cell

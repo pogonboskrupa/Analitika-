@@ -70,7 +70,7 @@ export function TrendLineChart({ data, title, height = 320 }: TrendLineChartProp
       )}
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
           <XAxis
             dataKey="datum"
             tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -99,30 +99,30 @@ export function TrendLineChart({ data, title, height = 320 }: TrendLineChartProp
             type="monotone"
             dataKey="ukupno"
             name="Ukupno"
-            stroke="#16a34a"
-            strokeWidth={2}
-            dot={data.length <= 60}
-            activeDot={{ r: 5, strokeWidth: 0 }}
+            stroke="#0f172a"
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{ r: 5, fill: "#0f172a", strokeWidth: 0 }}
           />
           <Line
             type="monotone"
             dataKey="cetinari"
             name="Četinari"
-            stroke="#166534"
+            stroke="#1d4ed8"
             strokeWidth={1.5}
-            strokeDasharray="4 2"
+            strokeDasharray="5 3"
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 4, fill: "#1d4ed8", strokeWidth: 0 }}
           />
           <Line
             type="monotone"
             dataKey="liscare"
             name="Lišćari"
-            stroke="#4ade80"
+            stroke="#ea580c"
             strokeWidth={1.5}
-            strokeDasharray="4 2"
+            strokeDasharray="5 3"
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 4, fill: "#ea580c", strokeWidth: 0 }}
           />
         </LineChart>
       </ResponsiveContainer>
