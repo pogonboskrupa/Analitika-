@@ -2,7 +2,7 @@
   "name": "Analitika - Šumska Analitika",
   "short_name": "Analitika",
   "description": "Analitika sječe i otpreme drvnih sortimenata",
-  "start_url": "/dashboard",
+  "start_url": "./#/dashboard",
   "display": "standalone",
   "background_color": "#052e16",
   "theme_color": "#16a34a",
