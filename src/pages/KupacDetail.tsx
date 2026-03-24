@@ -28,6 +28,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'godisnje', label: 'Godišnje' },
 ]
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 export default function KupacDetail() {
   const { id } = useParams<{ id: string }>()
   const kupacName = id ? decodeURIComponent(id) : ''
@@ -40,16 +42,24 @@ export default function KupacDetail() {
     [otpremaRows, kupacName]
   )
 
-  const totalUkupno = getTotalOtpremaUkupno(kupacRows)
-  const totalCetinari = getTotalOtpremaCetinari(kupacRows)
-  const totalLiscare = getTotalOtpremaLiscare(kupacRows)
+  // Current year rows only — used when "Godišnje" tab is active
+  const currentYearRows = useMemo(
+    () => kupacRows.filter(r => r.datum.getFullYear() === CURRENT_YEAR),
+    [kupacRows]
+  )
 
-  const dailyData = useMemo(() => aggregateOtpremaDailyTotals(kupacRows), [kupacRows])
+  const activeRows = activeTab === 'godisnje' ? currentYearRows : kupacRows
+
+  const totalUkupno = getTotalOtpremaUkupno(activeRows)
+  const totalCetinari = getTotalOtpremaCetinari(activeRows)
+  const totalLiscare = getTotalOtpremaLiscare(activeRows)
+
+  const dailyData = useMemo(() => aggregateOtpremaDailyTotals(activeRows), [activeRows])
 
   const weeklyData = useMemo(() => aggregateByWeek(kupacRows), [kupacRows])
   const monthlyData = useMemo(() => aggregateByMonth(kupacRows), [kupacRows])
   const quarterlyData = useMemo(() => aggregateByQuarter(kupacRows), [kupacRows])
-  const yearlyData = useMemo(() => aggregateByYear(kupacRows), [kupacRows])
+  const yearlyData = useMemo(() => aggregateByMonth(currentYearRows), [currentYearRows])
 
   const periodData: Record<Tab, PeriodTotal[]> = {
     sedmicno: weeklyData,
@@ -91,7 +101,11 @@ export default function KupacDetail() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{kupacName || 'Nepoznat kupac'}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Detaljna analiza otpreme — svi podaci</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {activeTab === 'godisnje'
+              ? `Detaljna analiza otpreme — tekuća godina (${CURRENT_YEAR})`
+              : 'Detaljna analiza otpreme — svi podaci'}
+          </p>
         </div>
         <PrintButton />
       </div>
@@ -149,7 +163,9 @@ export default function KupacDetail() {
                 <div className="p-4">
                   <VolumeBarChart
                     data={chartData}
-                    title={`Otprema – ${TABS.find(t => t.id === activeTab)?.label} (m³)`}
+                    title={activeTab === 'godisnje'
+                      ? `Otprema – Tekuća godina ${CURRENT_YEAR} po mjesecima (m³)`
+                      : `Otprema – ${TABS.find(t => t.id === activeTab)?.label} (m³)`}
                     height={280}
                   />
                 </div>
