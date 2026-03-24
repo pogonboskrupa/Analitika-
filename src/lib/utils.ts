@@ -36,6 +36,12 @@ export function getQuickSelectRange(qs: QuickSelect): DateRange {
   }
 }
 
+export function getLastNDaysRange(n: number): DateRange {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return { from: subDays(today, n - 1), to: today };
+}
+
 export function dateRangeToParams(range: DateRange): string {
   return `from=${format(range.from, "yyyy-MM-dd")}&to=${format(range.to, "yyyy-MM-dd")}`;
 }

@@ -7,16 +7,33 @@ import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange, filterByDateRange,
+  getQuickSelectRange, getLastNDaysRange, filterByDateRange,
   aggregatePrimacSummary, aggregateOdjelSummary, aggregateDailyTotals,
   getTotalUkupno, getTotalCetinari, getTotalLiscare,
-  aggregateGrades,
+  aggregateGrades, formatNumber,
 } from '@/lib/utils'
-import type { DateRange } from '@/lib/types'
+import type { DateRange, PrimkaRow, OtpremaRow } from '@/lib/types'
+
+const PERIOD_OPTIONS = [2, 3, 4, 5, 6, 7, 10, 30]
+
+function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
+  const s = (key: string) => rows.reduce((acc, r) => acc + (((r as unknown) as Record<string, number>)[key] || 0), 0)
+  return {
+    trupciC: s('fl_c') + s('i_c') + s('ii_c') + s('iii_c') + s('rd_c') + s('trupci_c'),
+    trupciL: s('fl_l') + s('i_l') + s('ii_l') + s('iii_l') + s('trupci_l'),
+    celDuga: s('cel_duga'),
+    celCijepana: s('cel_cijepana'),
+    skart: s('skart'),
+    ogrDugi: s('ogr_dugi'),
+    ogrCijepani: s('ogr_cijepani'),
+    gule: s('gule'),
+  }
+}
 
 export default function Dashboard() {
-  const { primkaRows, loading, error, refetch } = useSheet()
+  const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
   const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('30d'))
+  const [periodDays, setPeriodDays] = useState(7)
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
 
@@ -30,6 +47,12 @@ export default function Dashboard() {
   const odjelData = useMemo(() => aggregateOdjelSummary(filtered), [filtered])
   const dailyData = useMemo(() => aggregateDailyTotals(filtered), [filtered])
   const gradeData = useMemo(() => aggregateGrades(filtered), [filtered])
+
+  const periodRange = useMemo(() => getLastNDaysRange(periodDays), [periodDays])
+  const periodPrimka = useMemo(() => filterByDateRange(primkaRows, periodRange), [primkaRows, periodRange])
+  const periodOtprema = useMemo(() => filterByDateRange(otpremaRows, periodRange), [otpremaRows, periodRange])
+  const sjecaSortimenti = useMemo(() => sumSortimenti(periodPrimka), [periodPrimka])
+  const otpremaSortimenti = useMemo(() => sumSortimenti(periodOtprema), [periodOtprema])
 
   if (error) return <ErrorCard message={error} onRetry={refetch} />
 
@@ -72,8 +95,108 @@ export default function Dashboard() {
 
           <TrendLineChart data={dailyData} title="Dnevni trend sječe (m³)" height={320} />
           <VolumeBarChart data={gradeData} title="Volumen po klasi sortimenta (m³)" height={300} />
+
+          {/* Period sortiment comparison */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+                Sječa i otprema po sortimentima
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {PERIOD_OPTIONS.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setPeriodDays(d)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      periodDays === d
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Poslijednjih {periodDays} dana (sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa)
+            </p>
+            <SortimentiTable sjeca={sjecaSortimenti} otprema={otpremaSortimenti} />
+          </div>
         </>
       )}
+    </div>
+  )
+}
+
+type SortimentiSums = ReturnType<typeof sumSortimenti>
+
+function SortimentiTable({ sjeca, otprema }: { sjeca: SortimentiSums; otprema: SortimentiSums }) {
+  const rows: { label: string; tip: string; sjecaVal: number; otpremaVal: number }[] = [
+    { label: 'TRUPCI', tip: 'Četinari', sjecaVal: sjeca.trupciC, otpremaVal: otprema.trupciC },
+    { label: 'TRUPCI', tip: 'Lišćari', sjecaVal: sjeca.trupciL, otpremaVal: otprema.trupciL },
+    { label: 'Cel. duga', tip: '', sjecaVal: sjeca.celDuga, otpremaVal: otprema.celDuga },
+    { label: 'Cel. cijepana', tip: '', sjecaVal: sjeca.celCijepana, otpremaVal: otprema.celCijepana },
+    { label: 'Skart', tip: '', sjecaVal: sjeca.skart, otpremaVal: otprema.skart },
+    { label: 'Ogr. dugi', tip: '', sjecaVal: sjeca.ogrDugi, otpremaVal: otprema.ogrDugi },
+    { label: 'Ogr. cijepani', tip: '', sjecaVal: sjeca.ogrCijepani, otpremaVal: otprema.ogrCijepani },
+    { label: 'Gule', tip: '', sjecaVal: sjeca.gule, otpremaVal: otprema.gule },
+  ].filter(r => r.sjecaVal > 0 || r.otpremaVal > 0)
+
+  const totalSjeca = rows.reduce((s, r) => s + r.sjecaVal, 0)
+  const totalOtprema = rows.reduce((s, r) => s + r.otpremaVal, 0)
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200 dark:border-gray-700">
+            <th className="text-left py-2 pr-4 font-semibold text-gray-700 dark:text-gray-300 w-40">Sortiment</th>
+            <th className="text-right py-2 px-4 font-semibold text-green-700 dark:text-green-400">Sječa (m³)</th>
+            <th className="text-right py-2 px-4 font-semibold text-blue-700 dark:text-blue-400">Otprema (m³)</th>
+            <th className="text-right py-2 pl-4 font-semibold text-gray-500 dark:text-gray-400">Razlika (m³)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const diff = r.sjecaVal - r.otpremaVal
+            const isTrupci = r.label === 'TRUPCI'
+            return (
+              <tr key={i} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <td className="py-2 pr-4">
+                  <span className={`font-medium ${isTrupci ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                    {r.label}
+                  </span>
+                  {r.tip && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">({r.tip})</span>}
+                </td>
+                <td className="text-right py-2 px-4 font-mono text-green-700 dark:text-green-400">
+                  {formatNumber(r.sjecaVal)}
+                </td>
+                <td className="text-right py-2 px-4 font-mono text-blue-700 dark:text-blue-400">
+                  {formatNumber(r.otpremaVal)}
+                </td>
+                <td className={`text-right py-2 pl-4 font-mono ${diff >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {diff >= 0 ? '+' : ''}{formatNumber(diff)}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-gray-300 dark:border-gray-600">
+            <td className="py-2 pr-4 font-bold text-gray-900 dark:text-gray-100">UKUPNO</td>
+            <td className="text-right py-2 px-4 font-bold font-mono text-green-700 dark:text-green-400">
+              {formatNumber(totalSjeca)}
+            </td>
+            <td className="text-right py-2 px-4 font-bold font-mono text-blue-700 dark:text-blue-400">
+              {formatNumber(totalOtprema)}
+            </td>
+            <td className={`text-right py-2 pl-4 font-bold font-mono ${totalSjeca - totalOtprema >= 0 ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400'}`}>
+              {totalSjeca - totalOtprema >= 0 ? '+' : ''}{formatNumber(totalSjeca - totalOtprema)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   )
 }
