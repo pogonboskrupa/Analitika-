@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { getQuickSelectRange } from "@/lib/utils";
-import type { DateRange, QuickSelect } from "@/lib/types";
+import { getLastNDaysRange } from "@/lib/utils";
+import type { DateRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface DateRangePickerProps {
@@ -9,13 +9,7 @@ interface DateRangePickerProps {
   onChange: (range: DateRange) => void;
 }
 
-const QUICK_BUTTONS: { label: string; value: QuickSelect }[] = [
-  { label: "7d", value: "7d" },
-  { label: "30d", value: "30d" },
-  { label: "90d", value: "90d" },
-  { label: "YTD", value: "ytd" },
-  { label: "Sve", value: "all" },
-];
+const QUICK_DAYS = [1, 2, 3, 4, 5, 6, 7, 10, 30];
 
 function toInputValue(date: Date): string {
   return format(date, "yyyy-MM-dd");
@@ -29,17 +23,17 @@ function fromInputValue(str: string): Date | null {
 }
 
 export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
-  const [activeQuick, setActiveQuick] = useState<QuickSelect | null>(null);
+  const [activeDay, setActiveDay] = useState<number | null>(null);
 
-  function handleQuick(qs: QuickSelect) {
-    setActiveQuick(qs);
-    onChange(getQuickSelectRange(qs));
+  function handleQuick(days: number) {
+    setActiveDay(days);
+    onChange(getLastNDaysRange(days));
   }
 
   function handleFromChange(e: React.ChangeEvent<HTMLInputElement>) {
     const parsed = fromInputValue(e.target.value);
     if (parsed) {
-      setActiveQuick(null);
+      setActiveDay(null);
       onChange({ from: parsed, to: value.to });
     }
   }
@@ -47,7 +41,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
   function handleToChange(e: React.ChangeEvent<HTMLInputElement>) {
     const parsed = fromInputValue(e.target.value);
     if (parsed) {
-      setActiveQuick(null);
+      setActiveDay(null);
       onChange({ from: value.from, to: parsed });
     }
   }
@@ -56,18 +50,18 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
     <div className="flex flex-wrap items-center gap-2">
       {/* Quick select buttons */}
       <div className="flex items-center gap-1">
-        {QUICK_BUTTONS.map((btn) => (
+        {QUICK_DAYS.map((d) => (
           <button
-            key={btn.value}
-            onClick={() => handleQuick(btn.value)}
+            key={d}
+            onClick={() => handleQuick(d)}
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-md border transition-all duration-150",
-              activeQuick === btn.value
+              activeDay === d
                 ? "bg-forest-600 text-white border-forest-600 dark:bg-forest-500 dark:border-forest-500"
                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-forest-400 hover:text-forest-600 dark:hover:text-forest-400"
             )}
           >
-            {btn.label}
+            {d}d
           </button>
         ))}
       </div>

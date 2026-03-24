@@ -8,12 +8,21 @@ import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange, filterByDateRange,
+  getQuickSelectRange, getLastNDaysRange, filterByDateRange,
   aggregatePrimacSummary, aggregateOdjelSummary, aggregateDailyTotals,
   getTotalUkupno, getTotalCetinari, getTotalLiscare,
   aggregateGrades, formatNumber,
 } from '@/lib/utils'
-import type { DateRange, PrimkaRow, OtpremaRow } from '@/lib/types'
+import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow } from '@/lib/types'
+
+const SORT_QUICK: { label: string; value: QuickSelect }[] = [
+  { label: '7d', value: '7d' },
+  { label: '30d', value: '30d' },
+  { label: '90d', value: '90d' },
+  { label: 'YTD', value: 'ytd' },
+]
+
+type SortPeriodMode = 'quick' | 'custom'
 
 function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
   const s = (key: string) => rows.reduce((acc, r) => acc + (((r as unknown) as Record<string, number>)[key] || 0), 0)
@@ -44,11 +53,18 @@ export default function Dashboard() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
   const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
 
-  const ytdRange = useMemo(() => getQuickSelectRange('ytd'), [])
+  const [sortMode, setSortMode] = useState<SortPeriodMode>('quick')
+  const [sortQuick, setSortQuick] = useState<QuickSelect>('ytd')
+  const [sortCustom, setSortCustom] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+
+  const sortRange = useMemo(() => {
+    if (sortMode === 'custom') return sortCustom
+    return getQuickSelectRange(sortQuick)
+  }, [sortMode, sortQuick, sortCustom])
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
-  const periodPrimka = useMemo(() => filterByDateRange(primkaRows, ytdRange), [primkaRows, ytdRange])
-  const periodOtprema = useMemo(() => filterByDateRange(otpremaRows, ytdRange), [otpremaRows, ytdRange])
+  const periodPrimka = useMemo(() => filterByDateRange(primkaRows, sortRange), [primkaRows, sortRange])
+  const periodOtprema = useMemo(() => filterByDateRange(otpremaRows, sortRange), [otpremaRows, sortRange])
   const sjecaSortimenti = useMemo(() => sumSortimenti(periodPrimka), [periodPrimka])
   const otpremaSortimenti = useMemo(() => sumSortimenti(periodOtprema), [periodOtprema])
 
@@ -63,7 +79,13 @@ export default function Dashboard() {
   const dailyData = useMemo(() => aggregateDailyTotals(filtered), [filtered])
   const gradeData = useMemo(() => aggregateGrades(filtered), [filtered])
 
-  const periodLabel = `01.01.${new Date().getFullYear()} – danas`
+  const periodLabel = sortMode === 'custom'
+    ? `${format(sortCustom.from, 'dd.MM.yyyy')} – ${format(sortCustom.to, 'dd.MM.yyyy')}`
+    : sortQuick === 'ytd'
+      ? `01.01.${new Date().getFullYear()} – danas`
+      : sortQuick === '7d' ? 'Posljednjih 7 dana'
+      : sortQuick === '30d' ? 'Posljednjih 30 dana'
+      : 'Posljednjih 90 dana'
 
   if (error) return <ErrorCard message={error} onRetry={refetch} />
 
@@ -88,11 +110,58 @@ export default function Dashboard() {
         <>
           {/* Sječa i otprema po sortimentima — na vrhu */}
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
-            <div className="mb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
                 Sječa i otprema po sortimentima
               </h3>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {SORT_QUICK.map(btn => (
+                  <button
+                    key={btn.value}
+                    onClick={() => { setSortMode('quick'); setSortQuick(btn.value) }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      sortMode === 'quick' && sortQuick === btn.value
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setSortMode('custom')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    sortMode === 'custom'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Custom
+                </button>
+              </div>
             </div>
+
+            {sortMode === 'custom' && (
+              <div className="flex flex-wrap items-center gap-2 mb-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Od:</label>
+                <input
+                  type="date"
+                  value={toInputValue(sortCustom.from)}
+                  onChange={e => { const d = fromInputValue(e.target.value); if (d) setSortCustom(prev => ({ ...prev, from: d })) }}
+                  max={toInputValue(sortCustom.to)}
+                  className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Do:</label>
+                <input
+                  type="date"
+                  value={toInputValue(sortCustom.to)}
+                  onChange={e => { const d = fromInputValue(e.target.value); if (d) setSortCustom(prev => ({ ...prev, to: d })) }}
+                  min={toInputValue(sortCustom.from)}
+                  max={toInputValue(new Date())}
+                  className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </div>
+            )}
 
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {periodLabel} &mdash; sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa
