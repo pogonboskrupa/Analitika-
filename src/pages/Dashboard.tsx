@@ -81,43 +81,43 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
-        {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
-        <PrintButton />
+      {/* Žuti filter — kontrolira sortimenti tabelu */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {PERIOD_DAYS.map(d => (
+          <button
+            key={d}
+            onClick={() => setSortDays(d)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              sortDays === d
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {d}d
+          </button>
+        ))}
+        {loading && <span className="text-xs text-gray-400 animate-pulse ml-2">Učitavanje...</span>}
       </div>
 
       {loading && filtered.length === 0 ? (
         <Skeleton />
       ) : (
         <>
-          {/* Sječa i otprema po sortimentima — na vrhu */}
+          {/* Sječa i otprema po sortimentima */}
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-                Sječa i otprema po sortimentima
-              </h3>
-              <div className="flex flex-wrap gap-1.5 items-center">
-                {PERIOD_DAYS.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setSortDays(d)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      sortDays === d
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {d}d
-                  </button>
-                ))}
-              </div>
-            </div>
-
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50 mb-1">
+              Sječa i otprema po sortimentima
+            </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {periodLabel} &mdash; sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa
             </p>
             <SortimentiTable sjeca={sjecaSortimenti} otprema={otpremaSortimenti} />
+          </div>
+
+          {/* Crveni filter — kontrolira stats kartice i grafove */}
+          <div className="flex flex-wrap items-center gap-3">
+            <DateRangePicker value={range} onChange={setRange} />
+            <PrintButton />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
