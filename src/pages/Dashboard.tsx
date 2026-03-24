@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { format } from 'date-fns'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { StatsCard } from '@/components/StatsCard'
@@ -14,7 +15,9 @@ import {
 } from '@/lib/utils'
 import type { DateRange, PrimkaRow, OtpremaRow } from '@/lib/types'
 
-const PERIOD_OPTIONS = [2, 3, 4, 5, 6, 7, 10, 30]
+const PERIOD_DAYS = [1, 2, 3, 4, 5, 6, 7, 10, 30]
+
+type PeriodMode = 'days' | 'ytd' | 'custom'
 
 function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
   const s = (key: string) => rows.reduce((acc, r) => acc + (((r as unknown) as Record<string, number>)[key] || 0), 0)
@@ -30,12 +33,37 @@ function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
   }
 }
 
+function toInputValue(date: Date): string {
+  return format(date, 'yyyy-MM-dd')
+}
+
+function fromInputValue(str: string): Date | null {
+  if (!str) return null
+  const [year, month, day] = str.split('-').map(Number)
+  if (!year || !month || !day) return null
+  return new Date(year, month - 1, day)
+}
+
 export default function Dashboard() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
   const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+
+  // Period sortiment section state
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('days')
   const [periodDays, setPeriodDays] = useState(7)
+  const [customPeriod, setCustomPeriod] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+
+  const periodRange = useMemo(() => {
+    if (periodMode === 'ytd') return getQuickSelectRange('ytd')
+    if (periodMode === 'custom') return customPeriod
+    return getLastNDaysRange(periodDays)
+  }, [periodMode, periodDays, customPeriod])
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
+  const periodPrimka = useMemo(() => filterByDateRange(primkaRows, periodRange), [primkaRows, periodRange])
+  const periodOtprema = useMemo(() => filterByDateRange(otpremaRows, periodRange), [otpremaRows, periodRange])
+  const sjecaSortimenti = useMemo(() => sumSortimenti(periodPrimka), [periodPrimka])
+  const otpremaSortimenti = useMemo(() => sumSortimenti(periodOtprema), [periodOtprema])
 
   const totalUkupno = getTotalUkupno(filtered)
   const totalCetinari = getTotalCetinari(filtered)
@@ -48,11 +76,11 @@ export default function Dashboard() {
   const dailyData = useMemo(() => aggregateDailyTotals(filtered), [filtered])
   const gradeData = useMemo(() => aggregateGrades(filtered), [filtered])
 
-  const periodRange = useMemo(() => getLastNDaysRange(periodDays), [periodDays])
-  const periodPrimka = useMemo(() => filterByDateRange(primkaRows, periodRange), [primkaRows, periodRange])
-  const periodOtprema = useMemo(() => filterByDateRange(otpremaRows, periodRange), [otpremaRows, periodRange])
-  const sjecaSortimenti = useMemo(() => sumSortimenti(periodPrimka), [periodPrimka])
-  const otpremaSortimenti = useMemo(() => sumSortimenti(periodOtprema), [periodOtprema])
+  const periodLabel = periodMode === 'ytd'
+    ? `01.01.${new Date().getFullYear()} – danas`
+    : periodMode === 'custom'
+      ? `${format(customPeriod.from, 'dd.MM.yyyy')} – ${format(customPeriod.to, 'dd.MM.yyyy')}`
+      : `Poslijednjih ${periodDays} dan${periodDays === 1 ? '' : periodDays < 5 ? 'a' : 'a'}`
 
   if (error) return <ErrorCard message={error} onRetry={refetch} />
 
@@ -75,6 +103,83 @@ export default function Dashboard() {
         <Skeleton />
       ) : (
         <>
+          {/* Sječa i otprema po sortimentima — na vrhu */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+                Sječa i otprema po sortimentima
+              </h3>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {PERIOD_DAYS.map(d => (
+                  <button
+                    key={d}
+                    onClick={() => { setPeriodMode('days'); setPeriodDays(d) }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      periodMode === 'days' && periodDays === d
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPeriodMode('ytd')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    periodMode === 'ytd'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  YTD
+                </button>
+                <button
+                  onClick={() => setPeriodMode('custom')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    periodMode === 'custom'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Custom
+                </button>
+              </div>
+            </div>
+
+            {periodMode === 'custom' && (
+              <div className="flex flex-wrap items-center gap-2 mb-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Od:</label>
+                <input
+                  type="date"
+                  value={toInputValue(customPeriod.from)}
+                  onChange={e => {
+                    const d = fromInputValue(e.target.value)
+                    if (d) setCustomPeriod(prev => ({ ...prev, from: d }))
+                  }}
+                  max={toInputValue(customPeriod.to)}
+                  className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+                <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Do:</label>
+                <input
+                  type="date"
+                  value={toInputValue(customPeriod.to)}
+                  onChange={e => {
+                    const d = fromInputValue(e.target.value)
+                    if (d) setCustomPeriod(prev => ({ ...prev, to: d }))
+                  }}
+                  min={toInputValue(customPeriod.from)}
+                  max={toInputValue(new Date())}
+                  className="text-xs px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {periodLabel} &mdash; sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa
+            </p>
+            <SortimentiTable sjeca={sjecaSortimenti} otprema={otpremaSortimenti} />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatsCard title="Ukupno" value={totalUkupno} unit="m³"
               icon={<HomeIcon />} description="sječa" />
@@ -95,34 +200,6 @@ export default function Dashboard() {
 
           <TrendLineChart data={dailyData} title="Dnevni trend sječe (m³)" height={320} />
           <VolumeBarChart data={gradeData} title="Volumen po klasi sortimenta (m³)" height={300} />
-
-          {/* Period sortiment comparison */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-                Sječa i otprema po sortimentima
-              </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {PERIOD_OPTIONS.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setPeriodDays(d)}
-                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                      periodDays === d
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {d}d
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Poslijednjih {periodDays} dana (sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa)
-            </p>
-            <SortimentiTable sjeca={sjecaSortimenti} otprema={otpremaSortimenti} />
-          </div>
         </>
       )}
     </div>
