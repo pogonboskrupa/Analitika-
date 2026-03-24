@@ -5,10 +5,12 @@ import { StatsCard } from '@/components/StatsCard'
 import { VolumeBarChart } from '@/components/charts/VolumeBarChart'
 import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
+import { PrintButton } from '@/components/PrintButton'
 import {
   getQuickSelectRange, filterByDateRange,
   aggregatePrimacSummary, aggregateOdjelSummary, aggregateDailyTotals,
   getTotalUkupno, getTotalCetinari, getTotalLiscare,
+  aggregateGrades,
 } from '@/lib/utils'
 import type { DateRange } from '@/lib/types'
 
@@ -27,6 +29,7 @@ export default function Dashboard() {
     })), [filtered])
   const odjelData = useMemo(() => aggregateOdjelSummary(filtered), [filtered])
   const dailyData = useMemo(() => aggregateDailyTotals(filtered), [filtered])
+  const gradeData = useMemo(() => aggregateGrades(filtered), [filtered])
 
   if (error) return <ErrorCard message={error} onRetry={refetch} />
 
@@ -42,6 +45,7 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-center gap-3">
         <DateRangePicker value={range} onChange={setRange} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
+        <PrintButton />
       </div>
 
       {loading && filtered.length === 0 ? (
@@ -67,6 +71,7 @@ export default function Dashboard() {
           </div>
 
           <TrendLineChart data={dailyData} title="Dnevni trend sječe (m³)" height={320} />
+          <VolumeBarChart data={gradeData} title="Volumen po klasi sortimenta (m³)" height={300} />
         </>
       )}
     </div>

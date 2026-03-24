@@ -96,3 +96,39 @@ export interface DailyTotal {
   cetinari: number;
   liscare: number;
 }
+
+export interface RadilisteSummary {
+  radiliste: string;
+  totalUkupno: number;
+  totalCetinari: number;
+  totalLiscare: number;
+  count: number;
+}
+
+export interface IzvođačSummary {
+  izvođač: string;
+  totalUkupno: number;
+  totalCetinari: number;
+  totalLiscare: number;
+  count: number;
+}
+
+export interface OtpremacSummary {
+  otpremac: string;
+  totalUkupno: number;
+  totalCetinari: number;
+  totalLiscare: number;
+  count: number;
+}
+
+export interface KupacSummary {
+  kupac: string;
+  totalUkupno: number;
+}
+
+export interface GradeData {
+  name: string;
+  cetinari: number;
+  liscare: number;
+  ukupno: number;
+}

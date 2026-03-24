@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, startOfYear, subDays } from "date-fns";
-import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal } from "./types";
+import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal, GradeData, RadilisteSummary, IzvođačSummary, OtpremacSummary, KupacSummary } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -145,4 +145,81 @@ export function getTotalCetinari(rows: PrimkaRow[]): number {
 
 export function getTotalLiscare(rows: PrimkaRow[]): number {
   return rows.reduce((sum, r) => sum + r.liscare, 0);
+}
+
+export function aggregateGrades(rows: PrimkaRow[]): GradeData[] {
+  const sum = (key: keyof PrimkaRow) => rows.reduce((s, r) => s + (r[key] as number), 0)
+  return [
+    { name: 'FL', cetinari: sum('fl_c'), liscare: sum('fl_l'), ukupno: sum('fl_c') + sum('fl_l') },
+    { name: 'I. kl.', cetinari: sum('i_c'), liscare: sum('i_l'), ukupno: sum('i_c') + sum('i_l') },
+    { name: 'II. kl.', cetinari: sum('ii_c'), liscare: sum('ii_l'), ukupno: sum('ii_c') + sum('ii_l') },
+    { name: 'III. kl.', cetinari: sum('iii_c'), liscare: sum('iii_l'), ukupno: sum('iii_c') + sum('iii_l') },
+    { name: 'Trupci', cetinari: sum('trupci_c'), liscare: sum('trupci_l'), ukupno: sum('trupci_c') + sum('trupci_l') },
+    { name: 'Ogrevno', cetinari: sum('cel_duga') + sum('cel_cijepana'), liscare: sum('ogr_dugi') + sum('ogr_cijepani') + sum('gule'), ukupno: sum('cel_duga') + sum('cel_cijepana') + sum('ogr_dugi') + sum('ogr_cijepani') + sum('gule') },
+  ].filter(d => d.ukupno > 0)
+}
+
+export function aggregateRadilisteSummary(rows: PrimkaRow[]): RadilisteSummary[] {
+  const map = new Map<string, RadilisteSummary>()
+  for (const row of rows) {
+    const key = row.radiliste || '—'
+    const e = map.get(key)
+    if (e) { e.totalUkupno += row.ukupno; e.totalCetinari += row.sigma_cetinari; e.totalLiscare += row.liscare; e.count += 1 }
+    else { map.set(key, { radiliste: key, totalUkupno: row.ukupno, totalCetinari: row.sigma_cetinari, totalLiscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => b.totalUkupno - a.totalUkupno)
+}
+
+export function aggregateIzvođačSummary(rows: PrimkaRow[]): IzvođačSummary[] {
+  const map = new Map<string, IzvođačSummary>()
+  for (const row of rows) {
+    const key = row.izvođač || '—'
+    const e = map.get(key)
+    if (e) { e.totalUkupno += row.ukupno; e.totalCetinari += row.sigma_cetinari; e.totalLiscare += row.liscare; e.count += 1 }
+    else { map.set(key, { izvođač: key, totalUkupno: row.ukupno, totalCetinari: row.sigma_cetinari, totalLiscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => b.totalUkupno - a.totalUkupno)
+}
+
+export function aggregateOtpremacSummary(rows: OtpremaRow[]): OtpremacSummary[] {
+  const map = new Map<string, OtpremacSummary>()
+  for (const row of rows) {
+    const key = row.otpremac || '—'
+    const e = map.get(key)
+    if (e) { e.totalUkupno += row.ukupno; e.totalCetinari += row.sigma_cetinari; e.totalLiscare += row.liscare; e.count += 1 }
+    else { map.set(key, { otpremac: key, totalUkupno: row.ukupno, totalCetinari: row.sigma_cetinari, totalLiscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => b.totalUkupno - a.totalUkupno)
+}
+
+export function aggregateKupacSummary(rows: OtpremaRow[]): KupacSummary[] {
+  const map = new Map<string, number>()
+  for (const row of rows) {
+    const key = row.kupac || '—'
+    map.set(key, (map.get(key) ?? 0) + row.ukupno)
+  }
+  return Array.from(map.entries())
+    .map(([kupac, totalUkupno]) => ({ kupac, totalUkupno }))
+    .sort((a, b) => b.totalUkupno - a.totalUkupno)
+}
+
+export function aggregateOtpremaDailyTotals(rows: OtpremaRow[]): DailyTotal[] {
+  const map = new Map<string, DailyTotal>()
+  for (const row of rows) {
+    const key = format(row.datum, 'yyyy-MM-dd')
+    const e = map.get(key)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare }
+    else { map.set(key, { datum: key, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.datum.localeCompare(b.datum))
+}
+
+export function getTotalOtpremaUkupno(rows: OtpremaRow[]): number {
+  return rows.reduce((sum, r) => sum + r.ukupno, 0)
+}
+export function getTotalOtpremaCetinari(rows: OtpremaRow[]): number {
+  return rows.reduce((sum, r) => sum + r.sigma_cetinari, 0)
+}
+export function getTotalOtpremaLiscare(rows: OtpremaRow[]): number {
+  return rows.reduce((sum, r) => sum + r.liscare, 0)
 }

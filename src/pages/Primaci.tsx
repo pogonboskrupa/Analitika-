@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { PrimaciTable } from '@/components/tables/PrimaciTable'
+import { PrintButton } from '@/components/PrintButton'
 import {
   getQuickSelectRange,
   filterByDateRange,
@@ -40,6 +41,7 @@ export default function Primaci() {
       <div className="flex flex-wrap items-center gap-3">
         <DateRangePicker value={range} onChange={setRange} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
+        <PrintButton />
       </div>
 
       {loading && summaries.length === 0 ? (

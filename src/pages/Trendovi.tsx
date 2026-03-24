@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
+import { PrintButton } from '@/components/PrintButton'
 import { StatsCard } from '@/components/StatsCard'
 import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import {
@@ -98,6 +99,7 @@ export default function Trendovi() {
       <div className="flex flex-wrap items-center gap-3">
         <DateRangePicker value={range} onChange={setRange} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
+        <PrintButton />
       </div>
 
       {loading && filteredPrimka.length === 0 ? (

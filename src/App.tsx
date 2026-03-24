@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard'
 import Primaci from './pages/Primaci'
 import PrimacDetail from './pages/PrimacDetail'
 import Trendovi from './pages/Trendovi'
+import Otprema from './pages/Otprema'
+import Radilista from './pages/Radilista'
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
               <Route path="/primaci" element={<Primaci />} />
               <Route path="/primaci/:id" element={<PrimacDetail />} />
               <Route path="/trendovi" element={<Trendovi />} />
+              <Route path="/otprema" element={<Otprema />} />
+              <Route path="/radilista" element={<Radilista />} />
             </Routes>
           </div>
         </main>

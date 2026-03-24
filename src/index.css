@@ -70,3 +70,10 @@
     @apply bg-gray-300 dark:bg-gray-600 rounded-full;
   }
 }
+
+@media print {
+  nav, aside, .print\:hidden { display: none !important; }
+  main { margin-left: 0 !important; padding-top: 0 !important; }
+  body { background: white !important; }
+  .dark body { background: white !important; color: black !important; }
+}
