@@ -124,6 +124,18 @@ export interface OtpremacSummary {
 export interface KupacSummary {
   kupac: string;
   totalUkupno: number;
+  totalCetinari: number;
+  totalLiscare: number;
+  count: number;
+}
+
+export interface PeriodTotal {
+  label: string;
+  sortKey: string;
+  ukupno: number;
+  cetinari: number;
+  liscare: number;
+  count: number;
 }
 
 export interface GradeData {

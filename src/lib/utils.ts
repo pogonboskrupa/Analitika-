@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, startOfYear, subDays } from "date-fns";
-import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal, GradeData, RadilisteSummary, IzvođačSummary, OtpremacSummary, KupacSummary } from "./types";
+import { format, startOfYear, subDays, getISOWeek, getISOWeekYear, getMonth, getQuarter, getYear } from "date-fns";
+import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal, GradeData, RadilisteSummary, IzvođačSummary, OtpremacSummary, KupacSummary, PeriodTotal } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -193,14 +193,14 @@ export function aggregateOtpremacSummary(rows: OtpremaRow[]): OtpremacSummary[] 
 }
 
 export function aggregateKupacSummary(rows: OtpremaRow[]): KupacSummary[] {
-  const map = new Map<string, number>()
+  const map = new Map<string, KupacSummary>()
   for (const row of rows) {
     const key = row.kupac || '—'
-    map.set(key, (map.get(key) ?? 0) + row.ukupno)
+    const e = map.get(key)
+    if (e) { e.totalUkupno += row.ukupno; e.totalCetinari += row.sigma_cetinari; e.totalLiscare += row.liscare; e.count += 1 }
+    else { map.set(key, { kupac: key, totalUkupno: row.ukupno, totalCetinari: row.sigma_cetinari, totalLiscare: row.liscare, count: 1 }) }
   }
-  return Array.from(map.entries())
-    .map(([kupac, totalUkupno]) => ({ kupac, totalUkupno }))
-    .sort((a, b) => b.totalUkupno - a.totalUkupno)
+  return Array.from(map.values()).sort((a, b) => b.totalUkupno - a.totalUkupno)
 }
 
 export function aggregateOtpremaDailyTotals(rows: OtpremaRow[]): DailyTotal[] {
@@ -222,4 +222,60 @@ export function getTotalOtpremaCetinari(rows: OtpremaRow[]): number {
 }
 export function getTotalOtpremaLiscare(rows: OtpremaRow[]): number {
   return rows.reduce((sum, r) => sum + r.liscare, 0)
+}
+
+const MONTHS_BS = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+
+export function aggregateByWeek(rows: OtpremaRow[]): PeriodTotal[] {
+  const map = new Map<string, PeriodTotal>()
+  for (const row of rows) {
+    const week = getISOWeek(row.datum)
+    const year = getISOWeekYear(row.datum)
+    const sortKey = `${year}-W${String(week).padStart(2, '0')}`
+    const label = `Sed. ${week}/${year}`
+    const e = map.get(sortKey)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
+    else { map.set(sortKey, { label, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+}
+
+export function aggregateByMonth(rows: OtpremaRow[]): PeriodTotal[] {
+  const map = new Map<string, PeriodTotal>()
+  for (const row of rows) {
+    const month = getMonth(row.datum)
+    const year = getYear(row.datum)
+    const sortKey = `${year}-${String(month + 1).padStart(2, '0')}`
+    const label = `${MONTHS_BS[month]} ${year}`
+    const e = map.get(sortKey)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
+    else { map.set(sortKey, { label, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+}
+
+export function aggregateByQuarter(rows: OtpremaRow[]): PeriodTotal[] {
+  const map = new Map<string, PeriodTotal>()
+  for (const row of rows) {
+    const q = getQuarter(row.datum)
+    const year = getYear(row.datum)
+    const sortKey = `${year}-Q${q}`
+    const label = `Q${q} ${year}`
+    const e = map.get(sortKey)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
+    else { map.set(sortKey, { label, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+}
+
+export function aggregateByYear(rows: OtpremaRow[]): PeriodTotal[] {
+  const map = new Map<string, PeriodTotal>()
+  for (const row of rows) {
+    const year = getYear(row.datum)
+    const sortKey = `${year}`
+    const e = map.get(sortKey)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
+    else { map.set(sortKey, { label: sortKey, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 }
