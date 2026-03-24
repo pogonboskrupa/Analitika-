@@ -52,7 +52,10 @@ export function filterByDateRange<T extends { datum: Date }>(
 ): T[] {
   return rows.filter((row) => {
     const d = row.datum;
-    return d >= range.from && d <= range.to;
+    if (d < range.from || d > range.to) return false;
+    const day = d.getDay();
+    // Exclude Sunday always; Saturday only appears if it has data (working Saturday)
+    return day !== 0;
   });
 }
 
