@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { format } from 'date-fns'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { StatsCard } from '@/components/StatsCard'
@@ -30,17 +29,6 @@ function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
     ogrCijepani: s('ogr_cijepani'),
     gule: s('gule'),
   }
-}
-
-function toInputValue(date: Date): string {
-  return format(date, 'yyyy-MM-dd')
-}
-
-function fromInputValue(str: string): Date | null {
-  if (!str) return null
-  const [year, month, day] = str.split('-').map(Number)
-  if (!year || !month || !day) return null
-  return new Date(year, month - 1, day)
 }
 
 export default function Dashboard() {

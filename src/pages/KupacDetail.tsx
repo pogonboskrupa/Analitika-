@@ -9,7 +9,6 @@ import {
   aggregateByWeek,
   aggregateByMonth,
   aggregateByQuarter,
-  aggregateByYear,
   aggregateOtpremaDailyTotals,
   getTotalOtpremaUkupno,
   getTotalOtpremaCetinari,
@@ -17,7 +16,6 @@ import {
   formatNumber,
 } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import type { PeriodTotal } from '@/lib/types'
 
 type Tab = 'sedmicno' | 'mjesecno' | 'kvartalno' | 'godisnje'
 
@@ -59,23 +57,19 @@ export default function KupacDetail() {
   const weeklyData = useMemo(() => aggregateByWeek(kupacRows), [kupacRows])
   const monthlyData = useMemo(() => aggregateByMonth(kupacRows), [kupacRows])
   const quarterlyData = useMemo(() => aggregateByQuarter(kupacRows), [kupacRows])
-  const yearlyData = useMemo(() => aggregateByMonth(currentYearRows), [currentYearRows])
+  const currentYearMonthlyData = useMemo(() => aggregateByMonth(currentYearRows), [currentYearRows])
 
-  const periodData: Record<Tab, PeriodTotal[]> = {
-    sedmicno: weeklyData,
-    mjesecno: monthlyData,
-    kvartalno: quarterlyData,
-    godisnje: yearlyData,
-  }
+  const activeTabData = useMemo(() =>
+    activeTab === 'sedmicno' ? weeklyData :
+    activeTab === 'mjesecno' ? monthlyData :
+    activeTab === 'kvartalno' ? quarterlyData :
+    currentYearMonthlyData,
+    [activeTab, weeklyData, monthlyData, quarterlyData, currentYearMonthlyData]
+  )
 
   const chartData = useMemo(() =>
-    periodData[activeTab].map(p => ({
-      name: p.label,
-      cetinari: p.cetinari,
-      liscare: p.liscare,
-      ukupno: p.ukupno,
-    })),
-    [activeTab, periodData]
+    activeTabData.map(p => ({ name: p.label, cetinari: p.cetinari, liscare: p.liscare, ukupno: p.ukupno })),
+    [activeTabData]
   )
 
   if (error) {
@@ -184,7 +178,7 @@ export default function KupacDetail() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {periodData[activeTab].map(row => (
+                      {activeTabData.map(row => (
                         <tr key={row.sortKey} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                           <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">{row.label}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{row.count}</td>
@@ -196,25 +190,25 @@ export default function KupacDetail() {
                           </td>
                         </tr>
                       ))}
-                      {periodData[activeTab].length === 0 && (
+                      {activeTabData.length === 0 && (
                         <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">Nema podataka.</td></tr>
                       )}
                     </tbody>
-                    {periodData[activeTab].length > 0 && (
+                    {activeTabData.length > 0 && (
                       <tfoot>
                         <tr className="border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 font-semibold">
                           <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">Ukupno</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                            {periodData[activeTab].reduce((s, r) => s + r.count, 0)}
+                            {activeTabData.reduce((s, r) => s + r.count, 0)}
                           </td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                            {formatNumber(periodData[activeTab].reduce((s, r) => s + r.cetinari, 0))}
+                            {formatNumber(activeTabData.reduce((s, r) => s + r.cetinari, 0))}
                           </td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                            {formatNumber(periodData[activeTab].reduce((s, r) => s + r.liscare, 0))}
+                            {formatNumber(activeTabData.reduce((s, r) => s + r.liscare, 0))}
                           </td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-gray-900 dark:text-gray-100">
-                            {formatNumber(periodData[activeTab].reduce((s, r) => s + r.ukupno, 0))}
+                            {formatNumber(activeTabData.reduce((s, r) => s + r.ukupno, 0))}
                           </td>
                           <td className="px-4 py-2.5 text-right text-gray-500">100%</td>
                         </tr>

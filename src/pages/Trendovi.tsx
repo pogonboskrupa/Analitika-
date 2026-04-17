@@ -8,32 +8,11 @@ import {
   getQuickSelectRange,
   filterByDateRange,
   aggregateDailyTotals,
+  aggregateOtpremaDailyTotals,
   getTotalUkupno,
   formatNumber,
 } from '@/lib/utils'
-import type { DateRange, OtpremaRow, DailyTotal } from '@/lib/types'
-import { format } from 'date-fns'
-
-function aggregateOtpremaDailyTotals(rows: OtpremaRow[]): DailyTotal[] {
-  const map = new Map<string, DailyTotal>()
-  for (const row of rows) {
-    const key = format(row.datum, 'yyyy-MM-dd')
-    const existing = map.get(key)
-    if (existing) {
-      existing.ukupno += row.ukupno
-      existing.cetinari += row.sigma_cetinari
-      existing.liscare += row.liscare
-    } else {
-      map.set(key, {
-        datum: key,
-        ukupno: row.ukupno,
-        cetinari: row.sigma_cetinari,
-        liscare: row.liscare,
-      })
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => a.datum.localeCompare(b.datum))
-}
+import type { DateRange, DailyTotal } from '@/lib/types'
 
 function aggregateMonthlyTotals(primka: DailyTotal[], otprema: DailyTotal[]): Array<{datum: string; primka: number; otprema: number}> {
   const map = new Map<string, { primka: number; otprema: number }>()
