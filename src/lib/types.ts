@@ -144,3 +144,17 @@ export interface GradeData {
   liscare: number;
   ukupno: number;
 }
+
+export interface PeriodSortimenti {
+  label: string;
+  sortKey: string;
+  trupciC: number;
+  trupciL: number;
+  celDuga: number;
+  celCijepana: number;
+  ogrDugi: number;
+  ogrCijepani: number;
+  gule: number;
+  skart: number;
+  ukupno: number;
+}

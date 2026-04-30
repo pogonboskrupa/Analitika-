@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, startOfYear, subDays, getISOWeek, getISOWeekYear, getMonth, getQuarter, getYear } from "date-fns";
-import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal, GradeData, RadilisteSummary, IzvođačSummary, OtpremacSummary, KupacSummary, PeriodTotal } from "./types";
+import type { DateRange, QuickSelect, PrimkaRow, OtpremaRow, PrimacSummary, OdjelSummary, DailyTotal, GradeData, RadilisteSummary, IzvođačSummary, OtpremacSummary, KupacSummary, PeriodTotal, PeriodSortimenti } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -290,6 +290,62 @@ export function aggregateByYear(rows: OtpremaRow[]): PeriodTotal[] {
     const e = map.get(sortKey)
     if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
     else { map.set(sortKey, { label: sortKey, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+}
+
+function getPeriodKey(datum: Date, view: 'week' | 'month'): { sortKey: string; label: string } {
+  if (view === 'week') {
+    const week = getISOWeek(datum)
+    const year = getISOWeekYear(datum)
+    return { sortKey: `${year}-W${String(week).padStart(2, '0')}`, label: `Sed. ${week}/${year}` }
+  }
+  const month = getMonth(datum)
+  const year = getYear(datum)
+  return {
+    sortKey: `${year}-${String(month + 1).padStart(2, '0')}`,
+    label: `${MONTHS_BS[month]} ${year}`,
+  }
+}
+
+type PeriodRowBase = { datum: Date; sigma_cetinari: number; liscare: number; ukupno: number }
+
+export function aggregatePeriodTotals<T extends PeriodRowBase>(rows: T[], view: 'week' | 'month'): PeriodTotal[] {
+  const map = new Map<string, PeriodTotal>()
+  for (const row of rows) {
+    const { sortKey, label } = getPeriodKey(row.datum, view)
+    const e = map.get(sortKey)
+    if (e) { e.ukupno += row.ukupno; e.cetinari += row.sigma_cetinari; e.liscare += row.liscare; e.count += 1 }
+    else { map.set(sortKey, { label, sortKey, ukupno: row.ukupno, cetinari: row.sigma_cetinari, liscare: row.liscare, count: 1 }) }
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+}
+
+type SortimentRowBase = {
+  datum: Date
+  trupci_c: number; trupci_l: number; cel_duga: number; cel_cijepana: number
+  ogr_dugi: number; ogr_cijepani: number; gule: number; skart: number; ukupno: number
+}
+
+export function aggregateSortimentiByPeriod<T extends SortimentRowBase>(rows: T[], view: 'week' | 'month'): PeriodSortimenti[] {
+  const map = new Map<string, PeriodSortimenti>()
+  for (const row of rows) {
+    const { sortKey, label } = getPeriodKey(row.datum, view)
+    const e = map.get(sortKey)
+    if (e) {
+      e.trupciC += row.trupci_c; e.trupciL += row.trupci_l
+      e.celDuga += row.cel_duga; e.celCijepana += row.cel_cijepana
+      e.ogrDugi += row.ogr_dugi; e.ogrCijepani += row.ogr_cijepani
+      e.gule += row.gule; e.skart += row.skart; e.ukupno += row.ukupno
+    } else {
+      map.set(sortKey, {
+        label, sortKey,
+        trupciC: row.trupci_c, trupciL: row.trupci_l,
+        celDuga: row.cel_duga, celCijepana: row.cel_cijepana,
+        ogrDugi: row.ogr_dugi, ogrCijepani: row.ogr_cijepani,
+        gule: row.gule, skart: row.skart, ukupno: row.ukupno,
+      })
+    }
   }
   return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 }
