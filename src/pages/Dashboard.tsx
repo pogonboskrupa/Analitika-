@@ -19,15 +19,17 @@ const PERIOD_DAYS = [1, 2, 3, 4, 5, 6, 7, 10, 30]
 
 function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
   const s = (key: string) => rows.reduce((acc, r) => acc + (((r as unknown) as Record<string, number>)[key] || 0), 0)
+  // trupci_c / trupci_l are already the sheet-computed sums of (FL+I+II+III+RD) —
+  // adding the individual grade fields on top would double-count them
   return {
-    trupciC: s('fl_c') + s('i_c') + s('ii_c') + s('iii_c') + s('rd_c') + s('trupci_c'),
-    trupciL: s('fl_l') + s('i_l') + s('ii_l') + s('iii_l') + s('trupci_l'),
-    celDuga: s('cel_duga'),
+    trupciC:     s('trupci_c'),
+    trupciL:     s('trupci_l'),
+    celDuga:     s('cel_duga'),
     celCijepana: s('cel_cijepana'),
-    skart: s('skart'),
-    ogrDugi: s('ogr_dugi'),
+    skart:       s('skart'),
+    ogrDugi:     s('ogr_dugi'),
     ogrCijepani: s('ogr_cijepani'),
-    gule: s('gule'),
+    gule:        s('gule'),
   }
 }
 
