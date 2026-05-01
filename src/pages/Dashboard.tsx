@@ -19,14 +19,15 @@ const PERIOD_DAYS = [1, 2, 3, 4, 5, 6, 7, 10, 30]
 
 function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
   const s = (key: string) => rows.reduce((acc, r) => acc + (((r as unknown) as Record<string, number>)[key] || 0), 0)
-  // trupci_c / trupci_l are already the sheet-computed sums of (FL+I+II+III+RD) —
-  // adding the individual grade fields on top would double-count them
+  // trupci_c / trupci_l are the sheet-computed sums of (FL+I+II+III+RD) —
+  // adding the individual grade fields on top would double-count them.
+  // skart is excluded: it is not part of ukupno in the sheet, so including it
+  // here would inflate the sortiment total above the actual sječa volume.
   return {
     trupciC:     s('trupci_c'),
     trupciL:     s('trupci_l'),
     celDuga:     s('cel_duga'),
     celCijepana: s('cel_cijepana'),
-    skart:       s('skart'),
     ogrDugi:     s('ogr_dugi'),
     ogrCijepani: s('ogr_cijepani'),
     gule:        s('gule'),
@@ -144,7 +145,6 @@ function SortimentiTable({ sjeca, otprema }: { sjeca: SortimentiSums; otprema: S
     { label: 'TRUPCI', tip: 'Lišćari', sjecaVal: sjeca.trupciL, otpremaVal: otprema.trupciL },
     { label: 'Cel. duga', tip: '', sjecaVal: sjeca.celDuga, otpremaVal: otprema.celDuga },
     { label: 'Cel. cijepana', tip: '', sjecaVal: sjeca.celCijepana, otpremaVal: otprema.celCijepana },
-    { label: 'Skart', tip: '', sjecaVal: sjeca.skart, otpremaVal: otprema.skart },
     { label: 'Ogr. dugi', tip: '', sjecaVal: sjeca.ogrDugi, otpremaVal: otprema.ogrDugi },
     { label: 'Ogr. cijepani', tip: '', sjecaVal: sjeca.ogrCijepani, otpremaVal: otprema.ogrCijepani },
     { label: 'Gule', tip: '', sjecaVal: sjeca.gule, otpremaVal: otprema.gule },

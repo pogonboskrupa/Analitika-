@@ -91,21 +91,22 @@ function computeBreakdown(rows: PrimkaRow[], groupBy: 'primac' | 'odjel', specie
 
     if (species === 'cetinari') {
       fl = row.fl_c;  i = row.i_c;  ii = row.ii_c
-      // trupci_c, rd_c, skart all fold into III class for četinari
-      iii = row.iii_c + row.rd_c + row.trupci_c + row.skart
+      // rd_c is a sub-class of četinari logs; trupci_c is the sheet SUM (fl+i+ii+iii+rd) — do NOT add it
+      iii = row.iii_c + row.rd_c
       cel_duga = row.cel_duga;  cel_cijepana = row.cel_cijepana
       ogr_dugi = 0;  ogr_cijepani = 0;  gule = 0
       total = row.sigma_cetinari
     } else if (species === 'liscare') {
       fl = row.fl_l;  i = row.i_l;  ii = row.ii_l
-      // trupci_l folds into III class for lišćari
-      iii = row.iii_l + row.trupci_l
+      // trupci_l is the sheet SUM (fl+i+ii+iii) — do NOT add it to iii
+      iii = row.iii_l
       cel_duga = 0;  cel_cijepana = 0
       ogr_dugi = row.ogr_dugi;  ogr_cijepani = row.ogr_cijepani;  gule = row.gule
       total = row.liscare
     } else {
       fl = row.fl_c + row.fl_l;  i = row.i_c + row.i_l;  ii = row.ii_c + row.ii_l
-      iii = row.iii_c + row.iii_l + row.rd_c + row.trupci_c + row.trupci_l + row.skart
+      // trupci_c and trupci_l are sheet SUM columns — do NOT add them
+      iii = row.iii_c + row.iii_l + row.rd_c
       cel_duga = row.cel_duga;  cel_cijepana = row.cel_cijepana
       ogr_dugi = row.ogr_dugi;  ogr_cijepani = row.ogr_cijepani;  gule = row.gule
       total = row.ukupno

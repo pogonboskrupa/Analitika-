@@ -18,23 +18,21 @@ import {
 
 type PeriodView = 'sedmicno' | 'mjesecno'
 type DataSource = 'sjeca' | 'otprema'
-type SortKey = 'trupciC' | 'trupciL' | 'celDuga' | 'celCijepana' | 'ogrDugi' | 'ogrCijepani' | 'gule' | 'skart'
+type SortKey = 'trupciC' | 'trupciL' | 'celDuga' | 'celCijepana' | 'ogrDugi' | 'ogrCijepani' | 'gule'
 
 const SORT_COLORS: Record<SortKey, string> = {
   trupciC: '#1d4ed8', trupciL: '#0284c7',
   celDuga: '#7c3aed', celCijepana: '#a855f7',
   ogrDugi: '#c2410c', ogrCijepani: '#ea580c', gule: '#fb923c',
-  skart: '#9ca3af',
 }
 const SORT_LABELS: Record<SortKey, string> = {
   trupciC: 'Trupci Č', trupciL: 'Trupci L',
   celDuga: 'Cel. duga', celCijepana: 'Cel. cijepana',
   ogrDugi: 'Ogr. dugi', ogrCijepani: 'Ogr. cijepani', gule: 'Gule',
-  skart: 'Skart',
 }
 const ALL_SORT_KEYS: SortKey[] = [
   'trupciC', 'trupciL', 'celDuga', 'celCijepana',
-  'ogrDugi', 'ogrCijepani', 'gule', 'skart',
+  'ogrDugi', 'ogrCijepani', 'gule',
 ]
 
 export default function Trendovi() {
@@ -81,7 +79,7 @@ export default function Trendovi() {
     trupciC: p.trupciC, trupciL: p.trupciL,
     celDuga: p.celDuga, celCijepana: p.celCijepana,
     ogrDugi: p.ogrDugi, ogrCijepani: p.ogrCijepani,
-    gule: p.gule, skart: p.skart,
+    gule: p.gule,
   }))
   const activeSortKeys = ALL_SORT_KEYS.filter(k => sortChartData.some(d => d[k] > 0))
 
