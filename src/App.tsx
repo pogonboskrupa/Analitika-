@@ -12,6 +12,7 @@ import Kupci from './pages/Kupci'
 import KupacDetail from './pages/KupacDetail'
 import StanjeZaliha from './pages/StanjeZaliha'
 import Poredenje from './pages/Poredenje'
+import GodišnjiPlan from './pages/GodišnjiPlan'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/kupci/:id" element={<KupacDetail />} />
               <Route path="/zalihe" element={<StanjeZaliha />} />
               <Route path="/poredenje" element={<Poredenje />} />
+              <Route path="/godisnji-plan" element={<GodišnjiPlan />} />
             </Routes>
           </div>
         </main>
