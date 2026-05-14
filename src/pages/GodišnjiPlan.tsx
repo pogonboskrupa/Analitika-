@@ -609,10 +609,11 @@ export default function GodišnjiPlan() {
     })
   }, [])
 
-  // Aggregate actual by normalized odjel — no year filter, odjel matching handles relevance
+  // Aggregate actual by normalized odjel — only 2026 data
   const actualByOdjel = useMemo(() => {
     const m = new Map<string, ActualData>()
     for (const r of primkaRows) {
+      if (r.datum.getFullYear() !== 2026) continue
       const key = normOdjel(r.odjel)
       const d: ActualData = {
         cTrupci:     r.trupci_c,
@@ -761,7 +762,7 @@ export default function GodišnjiPlan() {
       <div className="text-xs">
         <button onClick={()=>setShowDiag(p=>!p)}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline decoration-dotted">
-          {showDiag?'▲':'▼'} Dijagnostika ({primkaRows.length} primka redova, {primkaOdjeli.length} unikat. odjela)
+          {showDiag?'▲':'▼'} Dijagnostika ({primkaRows.filter(r=>r.datum.getFullYear()===2026).length} primka redova 2026, {primkaOdjeli.length} unikat. odjela ukupno)
         </button>
         {showDiag && (
           <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2">

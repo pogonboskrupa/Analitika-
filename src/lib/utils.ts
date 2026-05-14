@@ -134,8 +134,9 @@ export function parseBosnianDate(dateStr: string): Date | null {
   if (parts.length !== 3) return null;
   const day = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10);
-  const year = parseInt(parts[2], 10);
+  let year = parseInt(parts[2], 10);
   if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (year < 100) year += 2000; // "26" → 2026
   const date = new Date(year, month - 1, day);
   if (isNaN(date.getTime())) return null;
   return date;
