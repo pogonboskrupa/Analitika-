@@ -783,10 +783,10 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
 // ── Print modal ───────────────────────────────────────────────────────────────
 const PRT_TH: React.CSSProperties = {
   border:'1px solid #374151', padding:'6px 10px', textAlign:'left',
-  fontSize:'11px', fontWeight:700, backgroundColor:'#f3f4f6', whiteSpace:'nowrap',
+  fontSize:'11px', fontWeight:700, backgroundColor:'#f3f4f6', whiteSpace:'nowrap', color:'#111827',
 }
 const PRT_TD: React.CSSProperties = {
-  border:'1px solid #d1d5db', padding:'5px 10px', fontSize:'11px',
+  border:'1px solid #d1d5db', padding:'5px 10px', fontSize:'11px', color:'#111827',
 }
 
 function PrintModal({ rows, onClose }: { rows: OdjelRow[]; onClose:()=>void }) {
@@ -861,11 +861,11 @@ function PrintModal({ rows, onClose }: { rows: OdjelRow[]; onClose:()=>void }) {
 
       {/* ── Paper ───────────────────────────────────────────────────────────── */}
       <div className="gp-paper mx-auto my-8 bg-white shadow-2xl"
-        style={{ maxWidth:'210mm', padding:'18mm 14mm', minHeight:'297mm', fontFamily:'Arial, sans-serif' }}>
+        style={{ maxWidth:'210mm', padding:'18mm 14mm', minHeight:'297mm', fontFamily:'Arial, sans-serif', color:'#111827' }}>
 
         {/* Header */}
         <div style={{ textAlign:'center', marginBottom:'16px', paddingBottom:'12px', borderBottom:'2px solid #111' }}>
-          <p style={{ fontSize:'11px', color:'#374151', margin:'0 0 2px' }}>JP "Šume Unsko-sanskog kantona" d.o.o. Bosanska Krupa</p>
+          <p style={{ fontSize:'11px', color:'#374151', margin:'0 0 2px' }}>ŠPD Unsko sanske šume d.o.o. Bos. Krupa</p>
           <p style={{ fontSize:'13px', fontWeight:700, margin:'0 0 2px' }}>Šumarija Bosanska Krupa — Pogon Bosanska Krupa</p>
           <h1 style={{ fontSize:'17px', fontWeight:900, letterSpacing:'.06em', textTransform:'uppercase', margin:'10px 0 4px' }}>
             Godišnji plan sječe za 2026. godinu
