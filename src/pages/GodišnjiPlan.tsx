@@ -278,27 +278,6 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
     return GJ_LIST.map(gj => s.filter(r=>r.gj===gj))
   }, [rows,sort,asc])
 
-  // Chart: plan (4 bars stacked) vs actual (8 bars stacked), top 15 by plan neto
-  const chartData = useMemo(() =>
-    [...rows].sort((a,b)=>a.neto-b.neto).slice(-15).map(d => ({
-      name: d.odjel,
-      // Plan (dark)
-      'P: Trupci Č':  d.cTrupci,
-      'P: Cjepano Č': d.dzgo,
-      'P: Trupci L':  d.lTrupci,
-      'P: Cjepano L': d.cijepano,
-      // Actual (lighter)
-      'A: Trupci Č':   d.actual.cTrupci,
-      'A: Cel. duga':  d.actual.celDuga,
-      'A: Cel. cij.':  d.actual.celCijepana,
-      'A: Škart':      d.actual.skart,
-      'A: Trupci L':   d.actual.lTrupci,
-      'A: Ogr. dugo':  d.actual.ogrDugi,
-      'A: Ogr. cij.':  d.actual.ogrCijepani,
-      'A: Gule':       d.actual.gule,
-    }))
-  , [rows])
-
   // Helper: format cell, show — for zero
   const f0 = (v: number) => v > 0
     ? <span className="font-medium tabular-nums">{formatNumber(v,0)}</span>
@@ -310,42 +289,6 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
 
   return (
     <div className="space-y-6">
-      {/* Chart */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan vs. ostvareno po sortimentima — top 15 odjela</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            Tamno = plan (4 grupe) · Svjetlo = ostvareno (8 sortimenata)
-          </p>
-        </div>
-        <div className="p-5">
-          <ResponsiveContainer width="100%" height={Math.max(300, chartData.length*32)}>
-            <BarChart data={chartData} layout="vertical" margin={{ top:4, right:20, left:10, bottom:4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize:10, fill:'#6b7280' }} tickLine={false} axisLine={false}
-                tickFormatter={v=>`${(v/1000).toFixed(0)}k`} />
-              <YAxis type="category" dataKey="name" width={60} tick={{ fontSize:11, fill:'#374151' }} tickLine={false} axisLine={false} />
-              <Tooltip formatter={(v:number,n:string)=>[`${formatNumber(v,0)} m³`,n]} cursor={{ fill:'rgba(0,0,0,0.04)' }} />
-              <Legend wrapperStyle={{ fontSize:'10px', paddingTop:'8px' }} formatter={(v:string)=><span style={{ color:'#6b7280' }}>{v}</span>} />
-              {/* Plan bars (full opacity) */}
-              <Bar dataKey="P: Trupci Č"  stackId="p" fill={C.cTrupci}      fillOpacity={0.9} maxBarSize={11} />
-              <Bar dataKey="P: Cjepano Č" stackId="p" fill={C.celCijepana}  fillOpacity={0.9} maxBarSize={11} />
-              <Bar dataKey="P: Trupci L"  stackId="p" fill={C.lTrupci}      fillOpacity={0.9} maxBarSize={11} />
-              <Bar dataKey="P: Cjepano L" stackId="p" fill={C.ogrCijepani}  fillOpacity={0.9} maxBarSize={11} />
-              {/* Actual bars (lower opacity, 8 individual) */}
-              <Bar dataKey="A: Trupci Č"   stackId="a" fill={C.cTrupci}      fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Cel. duga"  stackId="a" fill={C.celDuga}      fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Cel. cij."  stackId="a" fill={C.celCijepana}  fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Škart"      stackId="a" fill={C.skart}        fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Trupci L"   stackId="a" fill={C.lTrupci}      fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Ogr. dugo"  stackId="a" fill={C.ogrDugi}      fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Ogr. cij."  stackId="a" fill={C.ogrCijepani}  fillOpacity={0.45} maxBarSize={11} />
-              <Bar dataKey="A: Gule"       stackId="a" fill={C.gule}         fillOpacity={0.45} maxBarSize={11} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
