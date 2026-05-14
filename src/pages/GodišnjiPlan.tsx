@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, ReferenceLine,
@@ -242,6 +243,7 @@ function sumRows(rs: OdjelRow[]) {
   const ogrDugi = rs.reduce((s,r)=>s+r.actual.ogrDugi,0)
   const ogrCij  = rs.reduce((s,r)=>s+r.actual.ogrCijepani,0)
   const gule    = rs.reduce((s,r)=>s+r.actual.gule,0)
+  const bruto   = rs.reduce((s,r)=>s+r.bruto,0)
   const neto    = rs.reduce((s,r)=>s+r.neto,0)
   const ukupno  = rs.reduce((s,r)=>s+r.actual.ukupno,0)
   const dzgoAct = celDuga + celCij + skart
@@ -249,7 +251,7 @@ function sumRows(rs: OdjelRow[]) {
   return {
     planCT, actCT, planDz, celDuga, celCij, skart,
     planLT, actLT, planCij, ogrDugi, ogrCij, gule,
-    neto, ukupno,
+    bruto, neto, ukupno,
     stepen:  neto>0   ? ukupno/neto*100   : 0,
     pctCT:   planCT>0  ? actCT/planCT*100  : 0,
     pctDz:   planDz>0  ? dzgoAct/planDz*100: 0,
@@ -778,6 +780,208 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
   )
 }
 
+// ── Print modal ───────────────────────────────────────────────────────────────
+const PRT_TH: React.CSSProperties = {
+  border:'1px solid #374151', padding:'6px 10px', textAlign:'left',
+  fontSize:'11px', fontWeight:700, backgroundColor:'#f3f4f6', whiteSpace:'nowrap',
+}
+const PRT_TD: React.CSSProperties = {
+  border:'1px solid #d1d5db', padding:'5px 10px', fontSize:'11px',
+}
+
+function PrintModal({ rows, onClose }: { rows: OdjelRow[]; onClose:()=>void }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const style = document.createElement('style')
+    style.id = '__gp_ps__'
+    style.textContent = [
+      '@media print {',
+      '  @page { margin:12mm 10mm; size:A4 portrait; }',
+      '  body>*:not([data-gp-print]) { display:none!important; }',
+      '  [data-gp-print] { position:static!important; overflow:visible!important; height:auto!important; background:white!important; }',
+      '  [data-gp-print] .gp-no-print { display:none!important; }',
+      '  [data-gp-print] .gp-paper { box-shadow:none!important; margin:0!important; max-width:100%!important; }',
+      '}',
+    ].join('\n')
+    document.head.appendChild(style)
+    return () => { document.body.style.overflow = prev; document.getElementById('__gp_ps__')?.remove() }
+  }, [])
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key==='Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+
+  const gjGroups = useMemo(() =>
+    GJ_LIST.map(gj => {
+      const gjRows = rows.filter(r => r.gj === gj)
+      return gjRows.length ? { gj, rows:gjRows, sums:sumRows(gjRows) } : null
+    }).filter((x): x is NonNullable<typeof x> => x !== null)
+  , [rows])
+
+  const grand     = useMemo(() => sumRows(rows), [rows])
+  const dateStr   = new Date().toLocaleDateString('bs-BA', { day:'2-digit', month:'2-digit', year:'numeric' })
+  const statusLbl = (s: StatusValue) => s==='posjeceno'?'Posječeno':s==='u-sjeci'?'U sječi':'Planirano'
+  const statusClr = (s: StatusValue) => s==='posjeceno'?'#15803d':s==='u-sjeci'?'#b45309':'#6b7280'
+  const rowBg     = (s: StatusValue) => s==='posjeceno'?'#f0fdf4':s==='u-sjeci'?'#fffbeb':'transparent'
+  const pctClr    = (p: number) => p>=90?'#15803d':p>=60?'#b45309':p>0?'#dc2626':'#9ca3af'
+
+  return createPortal(
+    <div data-gp-print="" className="fixed inset-0 z-[9999] overflow-auto" style={{ background:'rgba(0,0,0,.65)' }}>
+
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div className="gp-no-print sticky top-0 z-10 flex items-center justify-between gap-4 bg-gray-900 text-white px-6 py-3 shadow-xl">
+        <div className="flex items-center gap-3 min-w-0">
+          <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.75 19.5m10.56-5.671v.096m0 0a42.415 42.415 0 0 1-10.56 0M17.25 19.5l-.47-5.671M3 8.25h18M9 3.75h6" />
+          </svg>
+          <span className="text-sm font-semibold truncate">Godišnji plan sječe 2026 — Pogon Bosanska Krupa</span>
+          <span className="text-xs text-gray-400 shrink-0">{rows.length} odjela · {formatNumber(grand.neto,0)} m³ neto</span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => window.print()}
+            className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-colors shadow-lg">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <polyline points="6 9 6 2 18 2 18 9" /><rect x="6" y="14" width="12" height="8" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            </svg>
+            Štampaj
+          </button>
+          <button onClick={onClose}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+            Zatvori
+          </button>
+        </div>
+      </div>
+
+      {/* ── Paper ───────────────────────────────────────────────────────────── */}
+      <div className="gp-paper mx-auto my-8 bg-white shadow-2xl"
+        style={{ maxWidth:'210mm', padding:'18mm 14mm', minHeight:'297mm', fontFamily:'Arial, sans-serif' }}>
+
+        {/* Header */}
+        <div style={{ textAlign:'center', marginBottom:'16px', paddingBottom:'12px', borderBottom:'2px solid #111' }}>
+          <p style={{ fontSize:'11px', color:'#374151', margin:'0 0 2px' }}>JP "Šume Unsko-sanskog kantona" d.o.o. Bosanska Krupa</p>
+          <p style={{ fontSize:'13px', fontWeight:700, margin:'0 0 2px' }}>Šumarija Bosanska Krupa — Pogon Bosanska Krupa</p>
+          <h1 style={{ fontSize:'17px', fontWeight:900, letterSpacing:'.06em', textTransform:'uppercase', margin:'10px 0 4px' }}>
+            Godišnji plan sječe za 2026. godinu
+          </h1>
+          <p style={{ fontSize:'11px', color:'#6b7280', margin:0 }}>
+            Revidirani plan · {rows.length} odjela · Neto: {formatNumber(grand.neto,0)} m³ · Bruto: {formatNumber(grand.bruto,0)} m³
+          </p>
+        </div>
+
+        {/* Table */}
+        <table style={{ width:'100%', borderCollapse:'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ ...PRT_TH, width:'28px', textAlign:'center' }}>Rb.</th>
+              <th style={{ ...PRT_TH }}>Odjel</th>
+              <th style={{ ...PRT_TH, textAlign:'right' }}>Bruto m³</th>
+              <th style={{ ...PRT_TH, textAlign:'right' }}>Neto m³</th>
+              <th style={{ ...PRT_TH, textAlign:'right', color:'#1e40af' }}>Trupci Č</th>
+              <th style={{ ...PRT_TH, textAlign:'right', color:'#6d28d9' }}>Cjepano Č</th>
+              <th style={{ ...PRT_TH, textAlign:'right', color:'#15803d' }}>Trupci L</th>
+              <th style={{ ...PRT_TH, textAlign:'right', color:'#92400e' }}>Cjepano L</th>
+              <th style={{ ...PRT_TH, textAlign:'center' }}>Status</th>
+              <th style={{ ...PRT_TH, textAlign:'right' }}>Stepen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gjGroups.map(({ gj, rows:gjRows, sums:s }) => (<>
+              <tr key={`ph-${gj}`}>
+                <td colSpan={10} style={{ ...PRT_TD, backgroundColor:'#e5e7eb', fontWeight:700,
+                  fontSize:'11px', letterSpacing:'.05em', textTransform:'uppercase',
+                  color:GJ_COLOR[gj], paddingTop:7, paddingBottom:7 }}>
+                  {gj}
+                </td>
+              </tr>
+              {gjRows.map((row, i) => (
+                <tr key={`pr-${gj}-${row.odjel}`} style={{ backgroundColor:rowBg(row.status) }}>
+                  <td style={{ ...PRT_TD, textAlign:'center', color:'#9ca3af' }}>{i+1}</td>
+                  <td style={{ ...PRT_TD, fontWeight:600 }}>{row.odjel}{row.multiGJ?'*':''}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right', color:'#6b7280' }}>{formatNumber(row.bruto,0)}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right', fontWeight:700 }}>{formatNumber(row.neto,0)}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right' }}>{row.cTrupci>0?formatNumber(row.cTrupci,0):'—'}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right' }}>{row.dzgo>0?formatNumber(row.dzgo,0):'—'}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right' }}>{row.lTrupci>0?formatNumber(row.lTrupci,0):'—'}</td>
+                  <td style={{ ...PRT_TD, textAlign:'right' }}>{row.cijepano>0?formatNumber(row.cijepano,0):'—'}</td>
+                  <td style={{ ...PRT_TD, textAlign:'center', fontSize:'10px', fontWeight:600, color:statusClr(row.status) }}>
+                    {statusLbl(row.status)}
+                  </td>
+                  <td style={{ ...PRT_TD, textAlign:'right', fontWeight:600, color:pctClr(row.stepen) }}>
+                    {row.stepen>0?`${row.stepen.toFixed(1)}%`:'—'}
+                  </td>
+                </tr>
+              ))}
+              <tr key={`ps-${gj}`}>
+                <td colSpan={2} style={{ ...PRT_TD, backgroundColor:GJ_COLOR[gj]+'28', fontWeight:700,
+                  fontSize:'10px', letterSpacing:'.04em', textTransform:'uppercase', color:GJ_COLOR[gj] }}>
+                  Ukupno {gj}
+                </td>
+                {([s.bruto, s.neto, s.planCT, s.planDz, s.planLT, s.planCij] as number[]).map((v,i)=>(
+                  <td key={i} style={{ ...PRT_TD, backgroundColor:GJ_COLOR[gj]+'28', textAlign:'right', fontWeight:700 }}>{formatNumber(v,0)}</td>
+                ))}
+                <td style={{ ...PRT_TD, backgroundColor:GJ_COLOR[gj]+'28' }} />
+                <td style={{ ...PRT_TD, backgroundColor:GJ_COLOR[gj]+'28', textAlign:'right', fontWeight:700, color:pctClr(s.stepen) }}>
+                  {s.stepen.toFixed(1)}%
+                </td>
+              </tr>
+            </>))}
+            {/* Grand total */}
+            <tr>
+              <td colSpan={2} style={{ ...PRT_TD, backgroundColor:'#1f2937', color:'white', fontWeight:900,
+                fontSize:'11px', letterSpacing:'.05em', textTransform:'uppercase', borderColor:'#374151' }}>
+                Sveukupno
+              </td>
+              {([grand.bruto, grand.neto, grand.planCT, grand.planDz, grand.planLT, grand.planCij] as number[]).map((v,i)=>(
+                <td key={i} style={{ ...PRT_TD, backgroundColor:'#1f2937', color:'white', textAlign:'right', fontWeight:700, borderColor:'#374151' }}>{formatNumber(v,0)}</td>
+              ))}
+              <td style={{ ...PRT_TD, backgroundColor:'#1f2937', borderColor:'#374151' }} />
+              <td style={{ ...PRT_TD, backgroundColor:'#1f2937', color:'white', textAlign:'right', fontWeight:700, borderColor:'#374151' }}>
+                {grand.stepen.toFixed(1)}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Legend */}
+        <div style={{ marginTop:'10px', paddingTop:'8px', borderTop:'1px solid #e5e7eb', fontSize:'10px', color:'#6b7280' }}>
+          <p style={{ margin:'0 0 3px' }}>
+            Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · P = prelazni odjel · * odjel nastupa u dvije GJ
+          </p>
+          <div style={{ display:'flex', gap:'14px', marginTop:'4px' }}>
+            <span style={{ color:'#15803d' }}>■ Posječeno</span>
+            <span style={{ color:'#b45309' }}>■ U sječi</span>
+            <span>□ Planirano</span>
+          </div>
+        </div>
+
+        {/* Signatures */}
+        <div style={{ marginTop:'44px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'24px', fontSize:'11px' }}>
+          <div>
+            <p style={{ color:'#6b7280', marginBottom:'32px', margin:'0 0 32px' }}>Datum: {dateStr}</p>
+            <div style={{ borderTop:'1px solid #111', paddingTop:'4px', textAlign:'center' }}>Šef pogona</div>
+          </div>
+          <div>
+            <p style={{ marginBottom:'32px', margin:'0 0 32px' }}>&nbsp;</p>
+            <div style={{ borderTop:'1px solid #111', paddingTop:'4px', textAlign:'center' }}>Šumar</div>
+          </div>
+          <div>
+            <p style={{ marginBottom:'32px', margin:'0 0 32px' }}>&nbsp;</p>
+            <div style={{ borderTop:'1px solid #111', paddingTop:'4px', textAlign:'center' }}>Direktor</div>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 type GJFilter     = 'sve' | GJ
 type StatusFilter = 'sve' | StatusValue
@@ -788,6 +992,7 @@ export default function GodišnjiPlan() {
   const [gjFilter,     setGjFilter]     = useState<GJFilter>('sve')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('sve')
   const [showDiag,     setShowDiag]     = useState(false)
+  const [showPrint,    setShowPrint]    = useState(false)
 
   const [overrides, setOverrides] = useState<Map<string,StatusOverride>>(() => {
     const m = new Map<string,StatusOverride>()
@@ -893,13 +1098,24 @@ export default function GodišnjiPlan() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Godišnji plan 2026</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Revidirani plan — Pogon Bosanska Krupa · {PLAN_ENTRIES.length} odjela ·{' '}
-          {formatNumber(PLAN_ENTRIES.reduce((s,e)=>s+e.neto,0),0)} m³ neto plana
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Godišnji plan 2026</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Revidirani plan — Pogon Bosanska Krupa · {PLAN_ENTRIES.length} odjela ·{' '}
+            {formatNumber(PLAN_ENTRIES.reduce((s,e)=>s+e.neto,0),0)} m³ neto plana
+          </p>
+        </div>
+        <button onClick={() => setShowPrint(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-900 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shrink-0">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <polyline points="6 9 6 2 18 2 18 9" /><rect x="6" y="14" width="12" height="8" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          </svg>
+          Štampaj
+        </button>
       </div>
+      {showPrint && <PrintModal rows={allRows} onClose={() => setShowPrint(false)} />}
 
       {/* Filters */}
       <div className="flex flex-wrap items-start gap-4">
