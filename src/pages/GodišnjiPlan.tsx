@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, Fragment } from 'react'
 import { createPortal } from 'react-dom'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -11,7 +11,7 @@ import { cn, formatNumber } from '@/lib/utils'
 type GJ = 'Risovac Krupa' | 'Grmeč Jasenica' | 'Vojskova'
 type StatusOverride = 'auto' | 'posjeceno' | 'u-sjeci' | 'planirano'
 type StatusValue    = 'posjeceno' | 'u-sjeci' | 'planirano'
-type TabKey = 'grupe' | 'sortimenti' | 'pregled'
+type TabKey = 'grupe' | 'sortimenti' | 'pregled' | 'projekat'
 
 interface PlanEntry {
   gj:       GJ
@@ -780,6 +780,206 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
   )
 }
 
+// ── Tab 4: Plan po projektu ───────────────────────────────────────────────────
+function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
+  const grouped = useMemo(() =>
+    GJ_LIST.map(gj => ({ gj, rows: rows.filter(r => r.gj === gj) })).filter(g => g.rows.length > 0)
+  , [rows])
+
+  const grand = useMemo(() => sumRows(rows), [rows])
+
+  const f = (v: number) => v > 0
+    ? <span className="tabular-nums font-medium">{formatNumber(v,0)}</span>
+    : <span className="text-gray-300 dark:text-gray-700">—</span>
+
+  return (
+    <div className="space-y-6">
+      {/* Main table */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan po projektu — 2026</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            Poređenje projektovanih i ostvarenih masa po odjelima · Sve mase u m³
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 text-xs font-medium uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-left text-gray-400 w-8">Rb.</th>
+                <th className="px-3 py-2.5 text-left text-gray-400">Odjel</th>
+                <th className="px-3 py-2.5 text-left text-gray-400">Stavka</th>
+                <th className="px-3 py-2.5 text-right text-gray-400 whitespace-nowrap">Bruto m³</th>
+                <th className="px-3 py-2.5 text-right text-gray-400 whitespace-nowrap">Neto / Sječa m³</th>
+                <th className="px-3 py-2.5 text-right whitespace-nowrap" style={{ color:C.cTrupci }}>Trupci Č</th>
+                <th className="px-3 py-2.5 text-right whitespace-nowrap" style={{ color:C.celCijepana }}>Cjepano Č</th>
+                <th className="px-3 py-2.5 text-right whitespace-nowrap" style={{ color:C.lTrupci }}>Trupci L</th>
+                <th className="px-3 py-2.5 text-right whitespace-nowrap" style={{ color:C.ogrCijepani }}>Cjepano L</th>
+                <th className="px-3 py-2.5 text-right text-gray-400">Stepen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grouped.map(({ gj, rows: gjRows }) => {
+                const s = sumRows(gjRows)
+                const dzgoActGJ = s.celDuga + s.celCij + s.skart
+                const cijActGJ  = s.ogrDugi + s.ogrCij + s.gule
+                return (
+                  <Fragment key={gj}>
+                    {/* GJ header */}
+                    <tr>
+                      <td colSpan={10} className="px-4 py-2 text-xs font-bold uppercase tracking-wider border-y border-gray-200 dark:border-gray-700"
+                        style={{ backgroundColor:GJ_COLOR[gj]+'22', color:GJ_COLOR[gj] }}>
+                        {gj}
+                      </td>
+                    </tr>
+
+                    {gjRows.map((row, i) => {
+                      const dzgoActR = row.actual.celDuga + row.actual.celCijepana + row.actual.skart
+                      const cijActR  = row.actual.ogrDugi + row.actual.ogrCijepani + row.actual.gule
+                      return (
+                        <Fragment key={`${gj}-${row.odjel}`}>
+                          {/* Projekat row */}
+                          <tr className="border-b border-gray-50 dark:border-gray-800/50 bg-blue-50/20 dark:bg-blue-900/5">
+                            <td className="px-3 py-2 text-gray-400 text-xs" rowSpan={2}>{i+1}</td>
+                            <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap" rowSpan={2}>
+                              {row.odjel}{row.multiGJ && <sup className="text-gray-400 text-xs ml-0.5">*</sup>}
+                            </td>
+                            <td className="px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">1. Projekat</td>
+                            <td className="px-3 py-2 text-right text-gray-400 dark:text-gray-500">{f(row.bruto)}</td>
+                            <td className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-200">{f(row.neto)}</td>
+                            <td className="px-3 py-2 text-right">{f(row.cTrupci)}</td>
+                            <td className="px-3 py-2 text-right">{f(row.dzgo)}</td>
+                            <td className="px-3 py-2 text-right">{f(row.lTrupci)}</td>
+                            <td className="px-3 py-2 text-right">{f(row.cijepano)}</td>
+                            <td className="px-3 py-2 text-right text-gray-300 dark:text-gray-700">—</td>
+                          </tr>
+                          {/* Sječa row */}
+                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="px-3 py-2 text-xs font-bold text-green-700 dark:text-green-400 whitespace-nowrap">2. Sječa</td>
+                            <td className="px-3 py-2 text-right text-gray-300 dark:text-gray-700">—</td>
+                            <td className="px-3 py-2 text-right font-semibold text-gray-800 dark:text-gray-100">{f(row.actual.ukupno)}</td>
+                            <td className="px-3 py-2 text-right" style={{ color:row.actual.cTrupci>0?C.cTrupci:undefined }}>{f(row.actual.cTrupci)}</td>
+                            <td className="px-3 py-2 text-right" style={{ color:dzgoActR>0?C.celCijepana:undefined }}>{f(dzgoActR)}</td>
+                            <td className="px-3 py-2 text-right" style={{ color:row.actual.lTrupci>0?C.lTrupci:undefined }}>{f(row.actual.lTrupci)}</td>
+                            <td className="px-3 py-2 text-right" style={{ color:cijActR>0?C.ogrCijepani:undefined }}>{f(cijActR)}</td>
+                            <td className="px-3 py-2 text-right"><RealizacijaBadge pct={row.stepen} /></td>
+                          </tr>
+                        </Fragment>
+                      )
+                    })}
+
+                    {/* GJ subtotal — Projekat row */}
+                    <tr className="text-xs font-bold border-t-2 border-gray-300 dark:border-gray-600"
+                      style={{ backgroundColor:GJ_COLOR[gj]+'18' }}>
+                      <td colSpan={2} rowSpan={2} className="px-3 py-2.5 uppercase tracking-wider" style={{ color:GJ_COLOR[gj] }}>
+                        Ukupno {gj}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs font-bold text-blue-700 dark:text-blue-400">1. Projekat</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatNumber(s.bruto,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatNumber(s.neto,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.cTrupci }}>{formatNumber(s.planCT,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.celCijepana }}>{formatNumber(s.planDz,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.lTrupci }}>{formatNumber(s.planLT,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.ogrCijepani }}>{formatNumber(s.planCij,0)}</td>
+                      <td className="px-3 py-2.5" />
+                    </tr>
+                    {/* GJ subtotal — Sječa row */}
+                    <tr className="border-b-2 border-gray-300 dark:border-gray-600 text-xs font-bold"
+                      style={{ backgroundColor:GJ_COLOR[gj]+'18' }}>
+                      <td className="px-3 py-2.5 text-xs font-bold text-green-700 dark:text-green-400">2. Sječa</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-gray-300 dark:text-gray-700">—</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatNumber(s.ukupno,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.cTrupci }}>{formatNumber(s.actCT,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.celCijepana }}>{formatNumber(dzgoActGJ,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.lTrupci }}>{formatNumber(s.actLT,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.ogrCijepani }}>{formatNumber(cijActGJ,0)}</td>
+                      <td className="px-3 py-2.5 text-right"><RealizacijaBadge pct={s.stepen} /></td>
+                    </tr>
+                  </Fragment>
+                )
+              })}
+
+              {/* Grand total — Projekat */}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-bold">
+                <td colSpan={2} rowSpan={2} className="px-3 py-3 uppercase tracking-wider">Sveukupno</td>
+                <td className="px-3 py-3 text-xs font-bold text-blue-300">1. Projekat</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.bruto,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.neto,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.planCT,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.planDz,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.planLT,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.planCij,0)}</td>
+                <td className="px-3 py-3" />
+              </tr>
+              {/* Grand total — Sječa */}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-bold border-t border-gray-600">
+                <td className="px-3 py-3 text-xs font-bold text-green-300">2. Sječa</td>
+                <td className="px-3 py-3 text-right tabular-nums text-gray-400">—</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ukupno,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.actCT,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.celDuga+grand.celCij+grand.skart,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.actLT,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ogrDugi+grand.ogrCij+grand.gule,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums">{grand.stepen.toFixed(1)}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
+          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 nastupa u dvije GJ
+        </p>
+      </div>
+
+      {/* Rekapitulacija */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rekapitulacija po GJ</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Pregled ukupnih masa i stepena realizacije po gospodarskim jedinicama</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 text-xs font-medium uppercase tracking-wider text-gray-400">
+                <th className="px-4 py-2.5 text-left">Gospodarska jedinica</th>
+                <th className="px-4 py-2.5 text-right whitespace-nowrap">Plan neto m³</th>
+                <th className="px-4 py-2.5 text-right whitespace-nowrap">Sječa m³</th>
+                <th className="px-4 py-2.5 text-right">Stepen</th>
+                <th className="px-4 py-2.5 text-right whitespace-nowrap">Ostalo m³</th>
+                <th className="px-4 py-2.5 text-left w-40">Realizacija</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {GJ_LIST.map(gj => {
+                const gjRows = rows.filter(r => r.gj === gj)
+                if (!gjRows.length) return null
+                const s = sumRows(gjRows)
+                return (
+                  <tr key={gj} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-sm" style={{ color:GJ_COLOR[gj] }}>{gj}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatNumber(s.neto,0)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatNumber(s.ukupno,0)}</td>
+                    <td className="px-4 py-3 text-right"><RealizacijaBadge pct={s.stepen} /></td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatNumber(Math.max(0, s.neto-s.ukupno),0)}</td>
+                    <td className="px-4 py-3"><Bar2 pct={s.stepen} color={GJ_COLOR[gj]} /></td>
+                  </tr>
+                )
+              })}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-bold uppercase tracking-wider">
+                <td className="px-4 py-3">Sveukupno</td>
+                <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.neto,0)}</td>
+                <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ukupno,0)}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{grand.stepen.toFixed(1)}%</td>
+                <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(Math.max(0, grand.neto-grand.ukupno),0)}</td>
+                <td className="px-4 py-3"><Bar2 pct={grand.stepen} color="#6ee7b7" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Print modal ───────────────────────────────────────────────────────────────
 const PRT_TH: React.CSSProperties = {
   border:'1px solid #374151', padding:'6px 10px', textAlign:'left',
@@ -1187,6 +1387,7 @@ export default function GodišnjiPlan() {
           {id:'grupe',      label:'Po grupama'},
           {id:'sortimenti', label:'Po sortimentima'},
           {id:'pregled',    label:'Pregled plana'},
+          {id:'projekat',   label:'Plan po projektu'},
         ] as const).map(({id,label})=>(
           <button key={id} onClick={()=>setActiveTab(id)}
             className={cn('px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
@@ -1205,7 +1406,9 @@ export default function GodišnjiPlan() {
           ? <PoGrupama rows={filteredRows} onStatus={handleStatus} />
           : activeTab==='sortimenti'
           ? <PoSortimentima rows={filteredRows} onStatus={handleStatus} totals={totals} />
-          : <PregledPlana rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} onStatus={handleStatus} />
+          : activeTab==='pregled'
+          ? <PregledPlana rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} onStatus={handleStatus} />
+          : <PlanPoProjaktu rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} />
       }
     </div>
   )
