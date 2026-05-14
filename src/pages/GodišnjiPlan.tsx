@@ -467,7 +467,7 @@ function PoSortimentima({ rows, onStatus, totals }: {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ukupna realizacija godišnjeg plana 2025</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ukupna realizacija godišnjeg plana 2026</h3>
             <p className="text-xs text-gray-400 mt-0.5">Plan: {formatNumber(totals.planNeto,0)} m³ neto · Ostvareno: {formatNumber(totals.actUk,0)} m³</p>
           </div>
           <RealizacijaBadge pct={stepUk} />
@@ -709,7 +709,7 @@ export default function GodišnjiPlan() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Godišnji plan 2025</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Godišnji plan 2026</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Revidirani plan — Pogon Bosanska Krupa · {PLAN_ENTRIES.length} odjela ·{' '}
           {formatNumber(PLAN_ENTRIES.reduce((s,e)=>s+e.neto,0),0)} m³ neto plana
