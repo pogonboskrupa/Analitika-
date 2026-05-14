@@ -228,6 +228,36 @@ function GJHeader({ gj, colSpan }: { gj: GJ; colSpan: number }) {
   )
 }
 
+// ── Shared aggregation helper ─────────────────────────────────────────────────
+function sumRows(rs: OdjelRow[]) {
+  const planCT  = rs.reduce((s,r)=>s+r.cTrupci,0)
+  const actCT   = rs.reduce((s,r)=>s+r.actual.cTrupci,0)
+  const planDz  = rs.reduce((s,r)=>s+r.dzgo,0)
+  const celDuga = rs.reduce((s,r)=>s+r.actual.celDuga,0)
+  const celCij  = rs.reduce((s,r)=>s+r.actual.celCijepana,0)
+  const skart   = rs.reduce((s,r)=>s+r.actual.skart,0)
+  const planLT  = rs.reduce((s,r)=>s+r.lTrupci,0)
+  const actLT   = rs.reduce((s,r)=>s+r.actual.lTrupci,0)
+  const planCij = rs.reduce((s,r)=>s+r.cijepano,0)
+  const ogrDugi = rs.reduce((s,r)=>s+r.actual.ogrDugi,0)
+  const ogrCij  = rs.reduce((s,r)=>s+r.actual.ogrCijepani,0)
+  const gule    = rs.reduce((s,r)=>s+r.actual.gule,0)
+  const neto    = rs.reduce((s,r)=>s+r.neto,0)
+  const ukupno  = rs.reduce((s,r)=>s+r.actual.ukupno,0)
+  const dzgoAct = celDuga + celCij + skart
+  const cijAct  = ogrDugi + ogrCij + gule
+  return {
+    planCT, actCT, planDz, celDuga, celCij, skart,
+    planLT, actLT, planCij, ogrDugi, ogrCij, gule,
+    neto, ukupno,
+    stepen:  neto>0   ? ukupno/neto*100   : 0,
+    pctCT:   planCT>0  ? actCT/planCT*100  : 0,
+    pctDz:   planDz>0  ? dzgoAct/planDz*100: 0,
+    pctLT:   planLT>0  ? actLT/planLT*100  : 0,
+    pctCij:  planCij>0 ? cijAct/planCij*100: 0,
+  }
+}
+
 // ── Tab 1: Po grupama ─────────────────────────────────────────────────────────
 // Shows 8 individual actual sortiments vs 4 plan aggregates
 function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:string,v:StatusOverride)=>void }) {
@@ -276,6 +306,7 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
 
   // Total cols: #(1) + odjel(1) + status(1) + koef(1) + trupciC(2) + cjepaC(4) + trupciL(2) + cjepaL(4) + plan+ostvr+stepen(3) = 19
   const NCOLS = 19
+  const grand = useMemo(() => sumRows(rows), [rows])
 
   return (
     <div className="space-y-6">
@@ -377,6 +408,7 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
               {GJ_LIST.map(gj => {
                 const gjRows = grouped[GJ_LIST.indexOf(gj)]
                 if (!gjRows?.length) return null
+                const s = sumRows(gjRows)
                 return (
                   <>
                     <GJHeader key={`h-${gj}`} gj={gj} colSpan={NCOLS} />
@@ -415,9 +447,48 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
                         <td className="px-3 py-2 text-right"><RealizacijaBadge pct={row.stepen} /></td>
                       </tr>
                     ))}
+                    {/* ── GJ subtotal ── */}
+                    <tr key={`sub-${gj}`} className="text-xs font-semibold border-t-2 border-gray-300 dark:border-gray-600"
+                      style={{ backgroundColor:GJ_COLOR[gj]+'14' }}>
+                      <td colSpan={4} className="px-3 py-2.5 uppercase tracking-wider" style={{ color:GJ_COLOR[gj] }}>Ukupno {gj}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700 whitespace-nowrap">{formatNumber(s.planCT,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.cTrupci }}>{formatNumber(s.actCT,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700 whitespace-nowrap">{formatNumber(s.planDz,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.celDuga }}>{formatNumber(s.celDuga,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.celCijepana }}>{formatNumber(s.celCij,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.skart }}>{formatNumber(s.skart,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700 whitespace-nowrap">{formatNumber(s.planLT,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.lTrupci }}>{formatNumber(s.actLT,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-700 whitespace-nowrap">{formatNumber(s.planCij,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.ogrDugi }}>{formatNumber(s.ogrDugi,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.ogrCijepani }}>{formatNumber(s.ogrCij,0)}</td>
+                      <td className="px-2 py-2.5 text-right tabular-nums whitespace-nowrap" style={{ color:C.gule }}>{formatNumber(s.gule,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums font-bold text-gray-800 dark:text-gray-100 border-l border-gray-200 dark:border-gray-700 whitespace-nowrap">{formatNumber(s.neto,0)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatNumber(s.ukupno,0)}</td>
+                      <td className="px-3 py-2.5 text-right"><RealizacijaBadge pct={s.stepen} /></td>
+                    </tr>
                   </>
                 )
               })}
+              {/* ── Grand total ── */}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-bold">
+                <td colSpan={4} className="px-3 py-3 uppercase tracking-wider">Sveukupno</td>
+                <td className="px-2 py-3 text-right tabular-nums border-l border-gray-600 whitespace-nowrap">{formatNumber(grand.planCT,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.actCT,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums border-l border-gray-600 whitespace-nowrap">{formatNumber(grand.planDz,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.celDuga,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.celCij,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.skart,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums border-l border-gray-600 whitespace-nowrap">{formatNumber(grand.planLT,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.actLT,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums border-l border-gray-600 whitespace-nowrap">{formatNumber(grand.planCij,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ogrDugi,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ogrCij,0)}</td>
+                <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.gule,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums border-l border-gray-600 whitespace-nowrap">{formatNumber(grand.neto,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ukupno,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums">{grand.stepen.toFixed(1)}%</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -438,6 +509,14 @@ function PoSortimentima({ rows, onStatus, totals }: {
   const [sort, setSort] = useState('stepen')
   const [asc,  setAsc]  = useState(false)
   function hs(col:string) { if(sort===col)setAsc(p=>!p);else{setSort(col);setAsc(false)} }
+
+  const gjSums = useMemo(() =>
+    GJ_LIST.map(gj => {
+      const gjRows = rows.filter(r => r.gj === gj)
+      return gjRows.length ? { gj, ...sumRows(gjRows) } : null
+    }).filter((x): x is { gj: GJ } & ReturnType<typeof sumRows> => x !== null)
+  , [rows])
+  const grand = useMemo(() => sumRows(rows), [rows])
 
   const sorted = useMemo(()=>[...rows].sort((a,b)=>{
     if(sort==='odjel')return asc?a.odjel.localeCompare(b.odjel):b.odjel.localeCompare(a.odjel)
@@ -575,6 +654,33 @@ function PoSortimentima({ rows, onStatus, totals }: {
                   </tr>
                 )
               })}
+              {/* ── GJ subtotals ── */}
+              {gjSums.map(s => (
+                <tr key={`sub-${s.gj}`} className="text-xs font-semibold border-t-2 border-gray-300 dark:border-gray-600"
+                  style={{ backgroundColor:GJ_COLOR[s.gj]+'14' }}>
+                  <td colSpan={5} className="px-3 py-2.5 uppercase tracking-wider" style={{ color:GJ_COLOR[s.gj] }}>Ukupno {s.gj}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-200 whitespace-nowrap">{formatNumber(s.neto,0)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">{formatNumber(s.ukupno,0)}</td>
+                  <td className="px-3 py-2.5 text-right"><RealizacijaBadge pct={s.stepen} /></td>
+                  <td className="px-3 py-2.5 text-right whitespace-nowrap">{s.planCT>0  ? <RealizacijaBadge pct={s.pctCT}  /> : <span className="text-gray-300 dark:text-gray-700">—</span>}</td>
+                  <td className="px-3 py-2.5 text-right whitespace-nowrap">{s.planDz>0  ? <RealizacijaBadge pct={s.pctDz}  /> : <span className="text-gray-300 dark:text-gray-700">—</span>}</td>
+                  <td className="px-3 py-2.5 text-right whitespace-nowrap">{s.planLT>0  ? <RealizacijaBadge pct={s.pctLT}  /> : <span className="text-gray-300 dark:text-gray-700">—</span>}</td>
+                  <td className="px-3 py-2.5 text-right whitespace-nowrap">{s.planCij>0 ? <RealizacijaBadge pct={s.pctCij} /> : <span className="text-gray-300 dark:text-gray-700">—</span>}</td>
+                  <td />
+                </tr>
+              ))}
+              {/* ── Grand total ── */}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-bold">
+                <td colSpan={5} className="px-3 py-3 uppercase tracking-wider">Sveukupno</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.neto,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{formatNumber(grand.ukupno,0)}</td>
+                <td className="px-3 py-3 text-right tabular-nums">{grand.stepen.toFixed(1)}%</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{grand.planCT>0  ? `${grand.pctCT.toFixed(1)}%`  : '—'}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{grand.planDz>0  ? `${grand.pctDz.toFixed(1)}%`  : '—'}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{grand.planLT>0  ? `${grand.pctLT.toFixed(1)}%`  : '—'}</td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">{grand.planCij>0 ? `${grand.pctCij.toFixed(1)}%` : '—'}</td>
+                <td />
+              </tr>
             </tbody>
           </table>
         </div>
