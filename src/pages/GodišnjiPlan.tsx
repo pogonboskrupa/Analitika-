@@ -540,11 +540,10 @@ export default function GodišnjiPlan() {
     })
   }, [])
 
-  // Aggregate actual 2025 by normalized odjel
+  // Aggregate actual by normalized odjel — no year filter, odjel matching handles relevance
   const actualByOdjel = useMemo(() => {
     const m = new Map<string, ActualData>()
     for (const r of primkaRows) {
-      if (r.datum.getFullYear() !== 2025) continue
       const key      = normOdjel(r.odjel)
       const cTrupci  = r.trupci_c
       const dzgo     = r.cel_duga + r.cel_cijepana
@@ -557,6 +556,13 @@ export default function GodišnjiPlan() {
     }
     return m
   }, [primkaRows])
+
+  // Unique odjel values from primka (for diagnostics)
+  const primkaOdjeli = useMemo(() =>
+    Array.from(new Set(primkaRows.map(r => r.odjel).filter(Boolean))).sort()
+  , [primkaRows])
+
+  const [showDiag, setShowDiag] = useState(false)
 
   const zero: ActualData = { cTrupci:0, dzgo:0, lTrupci:0, cijepano:0, ukupno:0 }
 
@@ -667,6 +673,30 @@ export default function GodišnjiPlan() {
           ))}
         </div>
         {loading && <span className="text-xs text-gray-400 animate-pulse self-center">Učitavanje...</span>}
+      </div>
+
+      {/* Diagnostics (collapsed by default) */}
+      <div className="text-xs">
+        <button onClick={() => setShowDiag(p=>!p)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline decoration-dotted">
+          {showDiag ? '▲' : '▼'} Dijagnostika ({primkaRows.length} primka redova, {primkaOdjeli.length} unikat. odjela)
+        </button>
+        {showDiag && (
+          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2">
+            <p className="font-medium text-gray-600 dark:text-gray-300">Odjeli u primki (tačan naziv iz sheeta):</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">{primkaOdjeli.join(' · ') || '— nema podataka —'}</p>
+            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Odjeli u planu (normalizirani):</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">
+              {PLAN_ENTRIES.map(e => normOdjel(e.odjel)).filter((v,i,a)=>a.indexOf(v)===i).sort().join(' · ')}
+            </p>
+            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Pronađeni match-ovi:</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">
+              {PLAN_ENTRIES.map(e=>normOdjel(e.odjel)).filter((v,i,a)=>a.indexOf(v)===i)
+                .filter(k => actualByOdjel.has(k) || actualByOdjel.has('66'))
+                .sort().join(' · ') || '— nema match-ova —'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Sub-tabs */}
