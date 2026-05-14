@@ -86,9 +86,6 @@ const PLAN_ENTRIES: PlanEntry[] = [
   { gj:'Vojskova', odjel:'25',  bruto:750, neto:637, cTrupci:0, dzgo:0, lTrupci:0,   cijepano:637 },
 ]
 
-const O66_RK = 2307 / 6800
-const O66_GJ = 4493 / 6800
-
 // ── Constants ─────────────────────────────────────────────────────────────────
 const GJ_LIST: GJ[] = ['Risovac Krupa', 'Grmeč Jasenica', 'Vojskova']
 const GJ_COLOR: Record<GJ, string> = {
@@ -122,7 +119,17 @@ const STATUS_CSS: Record<StatusValue, string> = {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const normOdjel = (s: string) => s.trim().toUpperCase()
+// Normalize: uppercase, remove diacritics, strip trailing "P" (prelazni marker)
+// Primka stores "RISOVAC KRUPA 46", plan stores gj="Risovac Krupa" + odjel="46"
+// so we match normKey(r.odjel) === normKey(entry.gj + " " + entry.odjel)
+function normKey(s: string): string {
+  return s.trim().toUpperCase()
+    .replace(/Č/g, 'C').replace(/Ć/g, 'C')  // Č, Ć
+    .replace(/Š/g, 'S')                            // Š
+    .replace(/Ž/g, 'Z')                            // Ž
+    .replace(/Đ/g, 'DJ')                           // Đ
+    .replace(/P\s*$/, '').trim()                        // strip prelazni suffix
+}
 const lsKey = (gj: string, odjel: string) => `gp|${gj}|${odjel}`
 
 function lsGet(gj: string, odjel: string): StatusOverride {
@@ -415,7 +422,7 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          Cjepano Č plan = Cel.duga + Cel.cijepana + Škart · Cjepano L plan = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 proporcionalni udio (RK 34% / GJ 66%)
+          Cjepano Č plan = Cel.duga + Cel.cijepana + Škart · Cjepano L plan = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 nastupa u dvije GJ (Risovac Krupa + Grmeč Jasenica)
         </p>
       </div>
     </div>
@@ -572,7 +579,7 @@ function PoSortimentima({ rows, onStatus, totals }: {
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          * Odjel 66 proporcionalni udio (RK 34% / GJ 66%)
+          * Odjel 66 nastupa u dvije GJ (Risovac Krupa + Grmeč Jasenica)
         </p>
       </div>
     </div>
@@ -610,11 +617,12 @@ export default function GodišnjiPlan() {
   }, [])
 
   // Aggregate actual by normalized odjel — only 2026 data
+  // primka stores full "RISOVAC KRUPA 46"; key strips accents + trailing P
   const actualByOdjel = useMemo(() => {
     const m = new Map<string, ActualData>()
     for (const r of primkaRows) {
       if (r.datum.getFullYear() !== 2026) continue
-      const key = normOdjel(r.odjel)
+      const key = normKey(r.odjel)
       const d: ActualData = {
         cTrupci:     r.trupci_c,
         celDuga:     r.cel_duga,
@@ -646,25 +654,9 @@ export default function GodišnjiPlan() {
   const zero: ActualData = { cTrupci:0, celDuga:0, celCijepana:0, skart:0, lTrupci:0, ogrDugi:0, ogrCijepani:0, gule:0, ukupno:0 }
 
   const allRows = useMemo<OdjelRow[]>(() => {
-    const raw66 = actualByOdjel.get('66') ?? zero
     return PLAN_ENTRIES.map(entry => {
-      let actual: ActualData
-      if (entry.multiGJ) {
-        const ratio = entry.gj === 'Risovac Krupa' ? O66_RK : O66_GJ
-        actual = {
-          cTrupci:     Math.round(raw66.cTrupci     * ratio),
-          celDuga:     Math.round(raw66.celDuga     * ratio),
-          celCijepana: Math.round(raw66.celCijepana * ratio),
-          skart:       Math.round(raw66.skart       * ratio),
-          lTrupci:     Math.round(raw66.lTrupci     * ratio),
-          ogrDugi:     Math.round(raw66.ogrDugi     * ratio),
-          ogrCijepani: Math.round(raw66.ogrCijepani * ratio),
-          gule:        Math.round(raw66.gule        * ratio),
-          ukupno:      Math.round(raw66.ukupno      * ratio),
-        }
-      } else {
-        actual = actualByOdjel.get(normOdjel(entry.odjel)) ?? { ...zero }
-      }
+      // Key matches primka format "GJ_NORM ODJEL_NORM" e.g. "RISOVAC KRUPA 46"
+      const actual = actualByOdjel.get(normKey(entry.gj + ' ' + entry.odjel)) ?? { ...zero }
       const stepen   = entry.neto > 0 ? actual.ukupno / entry.neto * 100 : 0
       const koef     = entry.bruto > 0 ? entry.neto / entry.bruto * 100 : 0
       const override = overrides.get(`${entry.gj}|${entry.odjel}`) ?? 'auto'
@@ -767,14 +759,14 @@ export default function GodišnjiPlan() {
         {showDiag && (
           <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2">
             <p className="font-medium text-gray-600 dark:text-gray-300">Odjeli u primki (tačan naziv iz sheeta):</p>
-            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">{primkaOdjeli.join(' · ')||'— nema podataka —'}</p>
-            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Odjeli u planu (normalizirani):</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">{primkaOdjeli.map(normKey).join(' · ')||'— nema podataka —'}</p>
+            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Ključevi plana (GJ + odjel, normalizirani):</p>
             <p className="text-gray-500 dark:text-gray-400 font-mono break-all">
-              {PLAN_ENTRIES.map(e=>normOdjel(e.odjel)).filter((v,i,a)=>a.indexOf(v)===i).sort().join(' · ')}
+              {PLAN_ENTRIES.map(e=>normKey(e.gj+' '+e.odjel)).sort().join(' · ')}
             </p>
             <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Pronađeni match-ovi:</p>
             <p className="text-gray-500 dark:text-gray-400 font-mono break-all">
-              {PLAN_ENTRIES.map(e=>normOdjel(e.odjel)).filter((v,i,a)=>a.indexOf(v)===i)
+              {PLAN_ENTRIES.map(e=>normKey(e.gj+' '+e.odjel))
                 .filter(k=>actualByOdjel.has(k)).sort().join(' · ')||'— nema match-ova —'}
             </p>
           </div>
