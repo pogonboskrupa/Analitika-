@@ -1,10 +1,11 @@
 import { parseBosnianDate, parseNumericBosnian } from './utils'
-import type { PrimkaRow, OtpremaRow } from './types'
+import type { PrimkaRow, OtpremaRow, ZalihaValues, ZalihaOdjel } from './types'
 
 const SHEET_ID = '1DIpllQlrMJwE9wpF1Gtwbnbh6ghYM5f1PimSK2gwVQQ'
 
-export const PRIMKA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=INDEKS_PRIMKA`
+export const PRIMKA_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=INDEKS_PRIMKA`
 export const OTPREMA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=INDEKS_OTPREMA`
+export const ZALIHA_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=STANJE_ZALIHA`
 
 /** Minimal CSV parser handling quoted fields */
 export function fetchCsv(url: string): Promise<string[][]> {
@@ -84,4 +85,51 @@ export function parseOtpremaRows(csv: string[][]): OtpremaRow[] {
       ogr_dugi: n(22), ogr_cijepani: n(23), gule: n(24), liscare: n(25), ukupno: n(26),
     } satisfies OtpremaRow
   }).filter((r): r is OtpremaRow => r !== null)
+}
+
+// ── STANJE_ZALIHA parser ──────────────────────────────────────────────────────
+// Sheet layout: 6-row blocks per odjel
+//   R1: A="ODJEL"          B=odjel_name  C="OPIS"     D:W=sort headers
+//   R2: A="RADILIŠTE"      B=radiliste   C="PROJEKAT" D:W=projekat values
+//   R3: A="IZVOĐAČ"        B=izvodjac    C="SJEČA"    D:W=sječa values
+//   R4: A="POSLOVOĐA"      B=poslovodja  C="OTPREMA"  D:W=otprema values
+//   R5: A="ZADNJA OTPREMA" B=datum       C="ZALIHA"   D:W=zaliha values
+//   R6: empty separator
+// D:W (cols 3–22) = F/LČ I II III RD TrupciČ CelDuga CelCij Škart ΣČ F/LL I II III TrupciL OgrDugi OgrCij Gule Lišćari UKUPNO
+function parseZVals(row: string[]): ZalihaValues {
+  const n = (i: number) => parseNumericBosnian(row[i] ?? '')
+  return {
+    flC: n(3), iC: n(4), iiC: n(5), iiiC: n(6), rdC: n(7),
+    trupciC: n(8), celDuga: n(9), celCijepana: n(10), skart: n(11), sigmaC: n(12),
+    flL: n(13), iL: n(14), iiL: n(15), iiiL: n(16), trupciL: n(17),
+    ogrDugi: n(18), ogrCijepani: n(19), gule: n(20), liscare: n(21),
+    ukupno: n(22),
+  }
+}
+
+export function parseZalihaOdjeli(csv: string[][]): ZalihaOdjel[] {
+  const result: ZalihaOdjel[] = []
+  let i = 0
+  while (i < csv.length) {
+    const r0 = csv[i]
+    if ((r0[0] ?? '').trim().toUpperCase() !== 'ODJEL') { i++; continue }
+    const r1 = csv[i + 1]
+    const r2 = csv[i + 2]
+    const r3 = csv[i + 3]
+    const r4 = csv[i + 4]
+    if (!r1 || !r2 || !r3 || !r4) { i += 6; continue }
+    result.push({
+      odjel:         (r0[1] ?? '').trim(),
+      radiliste:     (r1[1] ?? '').trim(),
+      izvodjac:      (r2[1] ?? '').trim(),
+      poslovodja:    (r3[1] ?? '').trim(),
+      zadnjaOtprema: (r4[1] ?? '').trim(),
+      projekat: parseZVals(r1),
+      sjeca:    parseZVals(r2),
+      otprema:  parseZVals(r3),
+      zaliha:   parseZVals(r4),
+    })
+    i += 6
+  }
+  return result
 }

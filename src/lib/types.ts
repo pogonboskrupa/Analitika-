@@ -77,6 +77,26 @@ export interface OtpremaRowSerialized extends Omit<OtpremaRow, "datum"> {
   datum: string;
 }
 
+export interface ZalihaValues {
+  flC: number; iC: number; iiC: number; iiiC: number; rdC: number
+  trupciC: number; celDuga: number; celCijepana: number; skart: number; sigmaC: number
+  flL: number; iL: number; iiL: number; iiiL: number; trupciL: number
+  ogrDugi: number; ogrCijepani: number; gule: number; liscare: number
+  ukupno: number
+}
+
+export interface ZalihaOdjel {
+  odjel:         string
+  radiliste:     string
+  izvodjac:      string
+  poslovodja:    string
+  zadnjaOtprema: string
+  projekat:      ZalihaValues
+  sjeca:         ZalihaValues
+  otprema:       ZalihaValues
+  zaliha:        ZalihaValues
+}
+
 export interface PrimacSummary {
   primac: string;
   totalUkupno: number;
