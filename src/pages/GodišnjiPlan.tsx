@@ -842,6 +842,14 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
     GJ_LIST.map(gj => ({ gj, rows: rows.filter(r => r.gj === gj) })).filter(g => g.rows.length > 0)
   , [rows])
 
+  const [showZDiag, setShowZDiag] = useState(false)
+
+  // Keys we search for vs keys found in STANJE_ZALIHA
+  const planKeys    = useMemo(() => rows.map(r => normKey(r.gj + ' ' + r.odjel)), [rows])
+  const zalihaKeys  = useMemo(() => zalihaOdjeli.map(z => normKey(z.odjel)), [zalihaOdjeli])
+  const matchedKeys = useMemo(() => planKeys.filter(k => zalihaKeys.includes(k)), [planKeys, zalihaKeys])
+  const missedKeys  = useMemo(() => planKeys.filter(k => !zalihaKeys.includes(k)), [planKeys, zalihaKeys])
+
   return (
     <div className="space-y-6">
       {zalihaOdjeli.length === 0 && (
@@ -849,6 +857,28 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
           Podaci iz STANJE_ZALIHA lista se učitavaju ili nisu dostupni. Provjerite da li je sheet javan.
         </div>
       )}
+
+      {/* Diagnostics */}
+      <div className="text-xs">
+        <button onClick={() => setShowZDiag(p => !p)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline decoration-dotted">
+          {showZDiag ? '▲' : '▼'} Dijagnostika STANJE_ZALIHA ({zalihaOdjeli.length} odjela učitano, {matchedKeys.length}/{planKeys.length} match-eva)
+        </button>
+        {showZDiag && (
+          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2">
+            <p className="font-medium text-gray-600 dark:text-gray-300">Ključevi iz STANJE_ZALIHA (normalizirani):</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">{zalihaKeys.sort().join(' · ') || '— nema podataka —'}</p>
+            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Ključevi plana (GJ + odjel, normalizirani):</p>
+            <p className="text-gray-500 dark:text-gray-400 font-mono break-all">{planKeys.sort().join(' · ')}</p>
+            <p className="font-medium text-gray-600 dark:text-gray-300 mt-1">Pronađeni match-ovi ({matchedKeys.length}):</p>
+            <p className="text-green-600 dark:text-green-400 font-mono break-all">{matchedKeys.sort().join(' · ') || '— nema —'}</p>
+            {missedKeys.length > 0 && <>
+              <p className="font-medium text-red-600 dark:text-red-400 mt-1">Bez podataka ({missedKeys.length}):</p>
+              <p className="text-red-500 dark:text-red-400 font-mono break-all">{missedKeys.sort().join(' · ')}</p>
+            </>}
+          </div>
+        )}
+      </div>
 
       {/* Main table */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
