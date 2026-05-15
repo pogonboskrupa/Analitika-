@@ -19,23 +19,21 @@ interface SortimentRow {
 }
 
 const SORTIMENTI: SortimentRow[] = [
-  { label: 'Trupci četinari', group: 'Četinari', sjecaKey: 'trupci_c', otpremaKey: 'trupci_c' },
-  { label: 'FL četinari', group: 'Četinari', sjecaKey: 'fl_c', otpremaKey: 'fl_c' },
-  { label: 'I klasa četinari', group: 'Četinari', sjecaKey: 'i_c', otpremaKey: 'i_c' },
-  { label: 'II klasa četinari', group: 'Četinari', sjecaKey: 'ii_c', otpremaKey: 'ii_c' },
-  { label: 'III klasa četinari', group: 'Četinari', sjecaKey: 'iii_c', otpremaKey: 'iii_c' },
-  { label: 'Rudničko drvo', group: 'Četinari', sjecaKey: 'rd_c', otpremaKey: 'rd_c' },
-  { label: 'Celuloza duga', group: 'Četinari', sjecaKey: 'cel_duga', otpremaKey: 'cel_duga' },
+  { label: 'FL četinari',       group: 'Četinari', sjecaKey: 'fl_c',         otpremaKey: 'fl_c' },
+  { label: 'I klasa četinari',  group: 'Četinari', sjecaKey: 'i_c',          otpremaKey: 'i_c' },
+  { label: 'II klasa četinari', group: 'Četinari', sjecaKey: 'ii_c',         otpremaKey: 'ii_c' },
+  { label: 'III klasa četinari',group: 'Četinari', sjecaKey: 'iii_c',        otpremaKey: 'iii_c' },
+  { label: 'Rudničko drvo',     group: 'Četinari', sjecaKey: 'rd_c',         otpremaKey: 'rd_c' },
+  { label: 'Celuloza duga',     group: 'Četinari', sjecaKey: 'cel_duga',     otpremaKey: 'cel_duga' },
   { label: 'Celuloza cijepana', group: 'Četinari', sjecaKey: 'cel_cijepana', otpremaKey: 'cel_cijepana' },
-  { label: 'Škart', group: 'Četinari', sjecaKey: 'skart', otpremaKey: 'skart' },
-  { label: 'Trupci lišćari', group: 'Lišćari', sjecaKey: 'trupci_l', otpremaKey: 'trupci_l' },
-  { label: 'FL lišćari', group: 'Lišćari', sjecaKey: 'fl_l', otpremaKey: 'fl_l' },
-  { label: 'I klasa lišćari', group: 'Lišćari', sjecaKey: 'i_l', otpremaKey: 'i_l' },
-  { label: 'II klasa lišćari', group: 'Lišćari', sjecaKey: 'ii_l', otpremaKey: 'ii_l' },
-  { label: 'III klasa lišćari', group: 'Lišćari', sjecaKey: 'iii_l', otpremaKey: 'iii_l' },
-  { label: 'Ogrevno dugo', group: 'Lišćari', sjecaKey: 'ogr_dugi', otpremaKey: 'ogr_dugi' },
-  { label: 'Ogrevno cijepano', group: 'Lišćari', sjecaKey: 'ogr_cijepani', otpremaKey: 'ogr_cijepani' },
-  { label: 'Gule', group: 'Lišćari', sjecaKey: 'gule', otpremaKey: 'gule' },
+  { label: 'Škart',             group: 'Četinari', sjecaKey: 'skart',        otpremaKey: 'skart' },
+  { label: 'FL lišćari',        group: 'Lišćari',  sjecaKey: 'fl_l',         otpremaKey: 'fl_l' },
+  { label: 'I klasa lišćari',   group: 'Lišćari',  sjecaKey: 'i_l',          otpremaKey: 'i_l' },
+  { label: 'II klasa lišćari',  group: 'Lišćari',  sjecaKey: 'ii_l',         otpremaKey: 'ii_l' },
+  { label: 'III klasa lišćari', group: 'Lišćari',  sjecaKey: 'iii_l',        otpremaKey: 'iii_l' },
+  { label: 'Ogrevno dugo',      group: 'Lišćari',  sjecaKey: 'ogr_dugi',     otpremaKey: 'ogr_dugi' },
+  { label: 'Ogrevno cijepano',  group: 'Lišćari',  sjecaKey: 'ogr_cijepani', otpremaKey: 'ogr_cijepani' },
+  { label: 'Gule',              group: 'Lišćari',  sjecaKey: 'gule',         otpremaKey: 'gule' },
 ]
 
 function sumField(rows: PrimkaRow[], key: keyof PrimkaRow): number {
