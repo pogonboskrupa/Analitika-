@@ -928,7 +928,9 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
                       return (
                         <Fragment key={`${gj}-${row.odjel}`}>
                           {/* 1. Projekat */}
-                          <tr className="border-b border-gray-50 dark:border-gray-800/50 bg-blue-50/20 dark:bg-blue-900/5">
+                          <tr className={i%2===0
+                            ? 'border-b border-gray-50 dark:border-gray-800/50 bg-white dark:bg-transparent'
+                            : 'border-b border-blue-50 dark:border-gray-800/50 bg-slate-50 dark:bg-slate-800/30'}>
                             <td className="px-3 py-2 text-gray-400 text-xs" rowSpan={2}>{i+1}</td>
                             <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap" rowSpan={2}>
                               {row.odjel}{row.multiGJ && <sup className="text-gray-400 text-xs ml-0.5">*</sup>}
@@ -942,7 +944,9 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
                             <td className="px-3 py-2 text-right text-gray-300 dark:text-gray-700">—</td>
                           </tr>
                           {/* 2. Sječa */}
-                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                          <tr className={i%2===0
+                            ? 'border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-transparent'
+                            : 'border-b border-blue-100 dark:border-gray-800 bg-slate-50 dark:bg-slate-800/30'}>
                             <td className="px-3 py-2 text-xs font-bold text-green-700 dark:text-green-400 whitespace-nowrap">2. Sječa</td>
                             <td className="px-3 py-2 text-right" style={{ color:sjec&&sjec.trupciC>0?C.cTrupci:undefined }}>{f(sjec?.trupciC ?? 0)}</td>
                             <td className="px-3 py-2 text-right" style={{ color:sDz>0?C.celCijepana:undefined }}>{f(sDz)}</td>
