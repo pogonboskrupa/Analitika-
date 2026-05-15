@@ -169,7 +169,7 @@ export function aggregateGrades(rows: PrimkaRow[]): GradeData[] {
     { name: 'I. kl.', cetinari: sum('i_c'), liscare: sum('i_l'), ukupno: sum('i_c') + sum('i_l') },
     { name: 'II. kl.', cetinari: sum('ii_c'), liscare: sum('ii_l'), ukupno: sum('ii_c') + sum('ii_l') },
     { name: 'III. kl.', cetinari: sum('iii_c'), liscare: sum('iii_l'), ukupno: sum('iii_c') + sum('iii_l') },
-    { name: 'Trupci', cetinari: sum('trupci_c'), liscare: sum('trupci_l'), ukupno: sum('trupci_c') + sum('trupci_l') },
+    { name: 'RD', cetinari: sum('rd_c'), liscare: 0, ukupno: sum('rd_c') },
     { name: 'Ogrevno', cetinari: sum('cel_duga') + sum('cel_cijepana'), liscare: sum('ogr_dugi') + sum('ogr_cijepani') + sum('gule'), ukupno: sum('cel_duga') + sum('cel_cijepana') + sum('ogr_dugi') + sum('ogr_cijepani') + sum('gule') },
   ].filter(d => d.ukupno > 0)
 }
