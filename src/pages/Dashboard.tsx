@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { exportCsv } from '@/lib/exportCsv'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { StatsCard } from '@/components/StatsCard'
@@ -116,9 +117,27 @@ export default function Dashboard() {
         <>
           {/* Sječa i otprema po sortimentima */}
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50 mb-1">
-              Sječa i otprema po sortimentima
-            </h3>
+            <div className="flex items-start justify-between gap-4 mb-1">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+                Sječa i otprema po sortimentima
+              </h3>
+              <button onClick={() => exportCsv(`sortimenti_${periodLabel.replace(/\s+/g,'-')}`, [
+                ['Sortiment','Tip','Sjeca m3','Otprema m3','Razlika m3'],
+                ['TRUPCI','Cetinari',sjecaSortimenti.trupciC,otpremaSortimenti.trupciC,sjecaSortimenti.trupciC-otpremaSortimenti.trupciC],
+                ['TRUPCI','Liscari',sjecaSortimenti.trupciL,otpremaSortimenti.trupciL,sjecaSortimenti.trupciL-otpremaSortimenti.trupciL],
+                ['Cel. duga','',sjecaSortimenti.celDuga,otpremaSortimenti.celDuga,sjecaSortimenti.celDuga-otpremaSortimenti.celDuga],
+                ['Cel. cijepana','',sjecaSortimenti.celCijepana,otpremaSortimenti.celCijepana,sjecaSortimenti.celCijepana-otpremaSortimenti.celCijepana],
+                ['Ogr. dugi','',sjecaSortimenti.ogrDugi,otpremaSortimenti.ogrDugi,sjecaSortimenti.ogrDugi-otpremaSortimenti.ogrDugi],
+                ['Ogr. cijepani','',sjecaSortimenti.ogrCijepani,otpremaSortimenti.ogrCijepani,sjecaSortimenti.ogrCijepani-otpremaSortimenti.ogrCijepani],
+                ['Gule','',sjecaSortimenti.gule,otpremaSortimenti.gule,sjecaSortimenti.gule-otpremaSortimenti.gule],
+              ])}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:border-green-300 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Export CSV
+              </button>
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {periodLabel}
               {periodRange && (

@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { useSheet } from '@/context/SheetContext'
 import { cn, formatNumber } from '@/lib/utils'
+import { exportCsv } from '@/lib/exportCsv'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type GJ = 'Risovac Krupa' | 'Grmeč Jasenica' | 'Vojskova'
@@ -261,7 +262,11 @@ function sumRows(rs: OdjelRow[]) {
 
 // ── Tab 1: Po grupama ─────────────────────────────────────────────────────────
 // Shows 8 individual actual sortiments vs 4 plan aggregates
-function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:string,v:StatusOverride)=>void }) {
+function PoGrupama({ rows, onStatus, onOdjelClick }: {
+  rows: OdjelRow[]
+  onStatus: (gj:GJ,o:string,v:StatusOverride)=>void
+  onOdjelClick: (gj:GJ,o:string)=>void
+}) {
   const [sort, setSort] = useState('plan')
   const [asc,  setAsc]  = useState(false)
 
@@ -292,11 +297,17 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
     <div className="space-y-6">
       {/* Table */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Detalji po odjelima — 8 sortimenata</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            Plan (agregat) vs. Ostvareno (pojedinačni sortimenti) · Koef. = neto/bruto
-          </p>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Detalji po odjelima — 8 sortimenata</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Plan (agregat) vs. Ostvareno (pojedinačni sortimenti) · Koef. = neto/bruto · Klik na odjel = detalji
+            </p>
+          </div>
+          <ExportBtn onClick={() => exportCsv('po_grupama', [
+            ['GJ','Odjel','Status','Koef%','Plan TrupciČ','Ostvr TrupciČ','Plan CjepanoČ','Ostvr Cel.D','Ostvr Cel.C','Ostvr Škart','Plan TrupciL','Ostvr TrupciL','Plan CjepanoL','Ostvr Ogr.D','Ostvr Ogr.C','Ostvr Gule','Plan m3','Ostvr m3','Stepen%'],
+            ...rows.map(r => [r.gj,r.odjel,r.status,+r.koef.toFixed(1),r.cTrupci,r.actual.cTrupci,r.dzgo,r.actual.celDuga,r.actual.celCijepana,r.actual.skart,r.lTrupci,r.actual.lTrupci,r.cijepano,r.actual.ogrDugi,r.actual.ogrCijepani,r.actual.gule,r.neto,r.actual.ukupno,+r.stepen.toFixed(1)]),
+          ])} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -359,7 +370,8 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
                     {gjRows.map((row, i) => (
                       <tr key={`${gj}-${row.odjel}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="px-3 py-2 text-gray-400 text-xs tabular-nums">{i+1}</td>
-                        <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                        <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap cursor-pointer hover:text-forest-700 dark:hover:text-forest-400 hover:underline"
+                          onClick={() => onOdjelClick(gj, row.odjel)}>
                           {row.odjel}
                         </td>
                         <td className="px-3 py-2">
@@ -445,9 +457,10 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
 }
 
 // ── Tab 2: Po sortimentima ────────────────────────────────────────────────────
-function PoSortimentima({ rows, onStatus, totals }: {
+function PoSortimentima({ rows, onStatus, onOdjelClick, totals }: {
   rows: OdjelRow[]
   onStatus: (gj:GJ,o:string,v:StatusOverride)=>void
+  onOdjelClick: (gj:GJ,o:string)=>void
   totals: { planCT:number; planDz:number; planLT:number; planCij:number; planNeto:number; actCT:number; actDz:number; actLT:number; actCij:number; actUk:number }
 }) {
   const [sort, setSort] = useState('stepen')
@@ -544,8 +557,19 @@ function PoSortimentima({ rows, onStatus, totals }: {
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Projektovana masa i stepen realizacije po sortimentima</h3>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Projektovana masa i stepen realizacije po sortimentima</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Klik na odjel = detalji primke</p>
+          </div>
+          <ExportBtn onClick={() => exportCsv('po_sortimentima', [
+            ['GJ','Odjel','Status','Koef%','Plan m3','Ostvr m3','Stepen%','TrupciC%','CjepanoC%','TrupciL%','CjepanoL%'],
+            ...sorted.map(r => {
+              const sp=(a:number,p:number)=>p>0?+(a/p*100).toFixed(1):''
+              return [r.gj,r.odjel,r.status,+r.koef.toFixed(1),r.neto,r.actual.ukupno,+r.stepen.toFixed(1),
+                sp(r.actual.cTrupci,r.cTrupci),sp(dzgoAct(r.actual),r.dzgo),sp(r.actual.lTrupci,r.lTrupci),sp(cijAct(r.actual),r.cijepano)]
+            }),
+          ])} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -577,7 +601,8 @@ function PoSortimentima({ rows, onStatus, totals }: {
                   <tr key={`${row.gj}-${row.odjel}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                     <td className="px-3 py-2 text-gray-400 text-xs tabular-nums">{idx+1}</td>
                     <td className="px-3 py-2 text-xs font-medium whitespace-nowrap" style={{ color:GJ_COLOR[row.gj] }}>{row.gj}</td>
-                    <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                    <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap cursor-pointer hover:text-forest-700 dark:hover:text-forest-400 hover:underline"
+                      onClick={() => onOdjelClick(row.gj, row.odjel)}>
                       {row.odjel}
                     </td>
                     <td className="px-3 py-2">
@@ -637,7 +662,11 @@ function PoSortimentima({ rows, onStatus, totals }: {
 }
 
 // ── Tab 3: Pregled plana ──────────────────────────────────────────────────────
-function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:string,v:StatusOverride)=>void }) {
+function PregledPlana({ rows, onStatus, onOdjelClick }: {
+  rows: OdjelRow[]
+  onStatus: (gj:GJ,o:string,v:StatusOverride)=>void
+  onOdjelClick: (gj:GJ,o:string)=>void
+}) {
   const grouped = useMemo(() =>
     GJ_LIST.map(gj => ({ gj, rows: rows.filter(r => r.gj === gj) })).filter(g => g.rows.length > 0)
   , [rows])
@@ -680,9 +709,15 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan sječe 2026 — Pogon Bosanska Krupa</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Sve mase u m³ · P = prelazni odjel</p>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan sječe 2026 — Pogon Bosanska Krupa</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Sve mase u m³ · P = prelazni odjel · Klik na odjel = detalji</p>
+          </div>
+          <ExportBtn onClick={() => exportCsv('pregled_plana', [
+            ['GJ','Odjel','Status','Bruto m3','Neto m3','Trupci C','Cjepano C','Trupci L','Cjepano L'],
+            ...rows.map(r => [r.gj,r.odjel,r.status,r.bruto,r.neto,r.cTrupci,r.dzgo,r.lTrupci,r.cijepano]),
+          ])} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -722,7 +757,8 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
                       <tr key={`${gj}-${row.odjel}`}
                         className={cn('border-b border-gray-100 dark:border-gray-800 transition-colors', rowBg[row.status])}>
                         <td className="px-3 py-2.5 text-gray-400 text-xs">{i+1}</td>
-                        <td className="px-3 py-2.5 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                        <td className="px-3 py-2.5 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap cursor-pointer hover:text-forest-700 dark:hover:text-forest-400 hover:underline"
+                          onClick={() => onOdjelClick(gj, row.odjel)}>
                           {row.odjel}
                         </td>
                         <td className="px-3 py-2.5 text-right text-gray-500 dark:text-gray-400">{f(row.bruto)}</td>
@@ -780,7 +816,7 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
 
 // ── Tab 4: Plan po projektu ───────────────────────────────────────────────────
 // Reads PROJEKAT and SJEČA rows from STANJE_ZALIHA sheet (one block per odjel)
-function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
+function PlanPoProjaktu({ rows, onOdjelClick }: { rows: OdjelRow[]; onOdjelClick: (gj:GJ,o:string)=>void }) {
   const { zalihaOdjeli } = useSheet()
 
   // Build lookup: normKey(odjel_name) -> ZalihaOdjel
@@ -880,11 +916,28 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
 
       {/* Main table */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan po projektu — 2026</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            Izvor: lista STANJE_ZALIHA · 1. Projekat = projektovana masa · 2. Sječa = posječena masa · Sve mase u m³
-          </p>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Plan po projektu — 2026</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Izvor: lista STANJE_ZALIHA · 1. Projekat = projektovana masa · 2. Sječa = posječena masa · Sve mase u m³ · Klik na odjel = detalji
+            </p>
+          </div>
+          <ExportBtn onClick={() => {
+            const csvRows: (string|number)[][] = [
+              ['GJ','Odjel','Stavka','TrupciC','CjepanoC','TrupciL','CjepanoL','Ukupno m3','Stepen%'],
+            ]
+            for (const { gj, rows: gjRows } of grouped) {
+              for (const row of gjRows) {
+                const z = zalihaMap.get(normKey(row.gj + ' ' + row.odjel))
+                const proj = z?.projekat; const sjec = z?.sjeca
+                const step = proj && proj.ukupno > 0 && sjec ? +(sjec.ukupno/proj.ukupno*100).toFixed(1) : ''
+                csvRows.push([gj, row.odjel, '1. Projekat', proj?.trupciC??0, proj?cjepaC(proj):0, proj?.trupciL??0, proj?cjepaL(proj):0, proj?.ukupno??0, ''])
+                csvRows.push([gj, row.odjel, '2. Sječa',   sjec?.trupciC??0, sjec?cjepaC(sjec):0, sjec?.trupciL??0, sjec?cjepaL(sjec):0, sjec?.ukupno??0, step])
+              }
+            }
+            exportCsv('plan_po_projektu', csvRows)
+          }} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -930,7 +983,8 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
                             ? 'border-b border-gray-50 dark:border-gray-800/50 bg-white dark:bg-transparent'
                             : 'border-b border-blue-50 dark:border-gray-800/50 bg-slate-50 dark:bg-slate-800/30'}>
                             <td className="px-3 py-2 text-gray-400 text-xs" rowSpan={2}>{i+1}</td>
-                            <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap" rowSpan={2}>
+                            <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap cursor-pointer hover:text-forest-700 dark:hover:text-forest-400 hover:underline" rowSpan={2}
+                              onClick={() => onOdjelClick(gj, row.odjel)}>
                               {row.odjel}
                             </td>
                             <td className="px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">1. Projekat</td>
@@ -1054,6 +1108,157 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Export CSV button ─────────────────────────────────────────────────────────
+function ExportBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:border-green-300 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors">
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+      Export CSV
+    </button>
+  )
+}
+
+// ── Per-odjel detail modal ────────────────────────────────────────────────────
+function OdjelDetailModal({ gj, odjel, onClose }: { gj: GJ; odjel: string; onClose: () => void }) {
+  const { primkaRows } = useSheet()
+  const DAYS = ['ned','pon','uto','sri','čet','pet','sub']
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+
+  const rows = useMemo(() =>
+    primkaRows
+      .filter(r => normKey(r.odjel) === normKey(gj + ' ' + odjel))
+      .sort((a, b) => a.datum.getTime() - b.datum.getTime())
+  , [primkaRows, gj, odjel])
+
+  const totals = useMemo(() => ({
+    trupciC:     rows.reduce((s, r) => s + r.trupci_c,     0),
+    celDuga:     rows.reduce((s, r) => s + r.cel_duga,     0),
+    celCij:      rows.reduce((s, r) => s + r.cel_cijepana, 0),
+    skart:       rows.reduce((s, r) => s + r.skart,        0),
+    trupciL:     rows.reduce((s, r) => s + r.trupci_l,     0),
+    ogrDugi:     rows.reduce((s, r) => s + r.ogr_dugi,     0),
+    ogrCij:      rows.reduce((s, r) => s + r.ogr_cijepani, 0),
+    gule:        rows.reduce((s, r) => s + r.gule,         0),
+    ukupno:      rows.reduce((s, r) => s + r.ukupno,       0),
+  }), [rows])
+
+  const fmtD = (d: Date) => {
+    const dd = String(d.getDate()).padStart(2,'0')
+    const mm = String(d.getMonth()+1).padStart(2,'0')
+    return `${dd}.${mm}.${d.getFullYear()} (${DAYS[d.getDay()]})`
+  }
+  const f = (v: number) => v > 0 ? formatNumber(v, 0) : '—'
+
+  function doExport() {
+    exportCsv(`odjel_${odjel.replace(/\//g,'-')}_primka`, [
+      ['Datum','Primac','Radilište','Izvođač','Trupci Č','Cel.D','Cel.C','Škart','Trupci L','Ogr.D','Ogr.C','Gule','Ukupno'],
+      ...rows.map(r => [
+        fmtD(r.datum), r.primac, r.radiliste, r.izvođač,
+        r.trupci_c, r.cel_duga, r.cel_cijepana, r.skart,
+        r.trupci_l, r.ogr_dugi, r.ogr_cijepani, r.gule, r.ukupno,
+      ]),
+      ['UKUPNO','','','', totals.trupciC, totals.celDuga, totals.celCij, totals.skart,
+        totals.trupciL, totals.ogrDugi, totals.ogrCij, totals.gule, totals.ukupno],
+    ])
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9998] flex items-start justify-center overflow-auto bg-black/60 backdrop-blur-sm pt-6 pb-10 px-4">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                style={{ backgroundColor: GJ_COLOR[gj]+'22', color: GJ_COLOR[gj] }}>{gj}</span>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-50">Odjel {odjel}</h2>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">{rows.length} primka zapisa · {formatNumber(totals.ukupno, 0)} m³ ukupno</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ExportBtn onClick={doExport} />
+            <button onClick={onClose}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          {rows.length === 0 ? (
+            <p className="px-6 py-10 text-sm text-center text-gray-400">Nema primka zapisa za ovaj odjel.</p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 text-gray-400 uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-left font-medium whitespace-nowrap">Datum</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Primac</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Radilište</th>
+                  <th className="px-3 py-2.5 text-right font-medium whitespace-nowrap" style={{ color:C.cTrupci }}>Trupci Č</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.celDuga }}>Cel.D</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.celCijepana }}>Cel.C</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.skart }}>Škart</th>
+                  <th className="px-3 py-2.5 text-right font-medium whitespace-nowrap" style={{ color:C.lTrupci }}>Trupci L</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.ogrDugi }}>Ogr.D</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.ogrCijepani }}>Ogr.C</th>
+                  <th className="px-3 py-2.5 text-right font-medium" style={{ color:C.gule }}>Gule</th>
+                  <th className="px-3 py-2.5 text-right font-medium text-gray-500 whitespace-nowrap">Ukupno</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {rows.map((r, i) => (
+                  <tr key={i} className={i%2===0
+                    ? 'bg-white dark:bg-transparent'
+                    : 'bg-slate-50 dark:bg-slate-800/30'}>
+                    <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-300 font-medium">{fmtD(r.datum)}</td>
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300 max-w-[160px] truncate">{r.primac}</td>
+                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400 max-w-[120px] truncate">{r.radiliste || '—'}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.trupci_c)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.cel_duga)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.cel_cijepana)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.skart)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.trupci_l)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.ogr_dugi)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.ogr_cijepani)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{f(r.gule)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums font-semibold text-gray-800 dark:text-gray-100">{f(r.ukupno)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-800 dark:bg-gray-700 text-white font-bold text-xs">
+                  <td colSpan={3} className="px-3 py-2.5 uppercase tracking-wider">Ukupno</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.trupciC)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.celDuga)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.celCij)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.skart)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.trupciL)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.ogrDugi)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.ogrCij)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.gule)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{f(totals.ukupno)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }
 
@@ -1270,6 +1475,12 @@ export default function GodišnjiPlan() {
   const [showDiag,     setShowDiag]     = useState(false)
   const [showPrint,    setShowPrint]    = useState(false)
 
+  const [selectedOdjel, setSelectedOdjel] = useState<{gj:GJ;odjel:string}|null>(null)
+
+  const handleOdjelClick = useCallback((gj: GJ, odjel: string) => {
+    setSelectedOdjel({ gj, odjel })
+  }, [])
+
   const [overrides, setOverrides] = useState<Map<string,StatusOverride>>(() => {
     const m = new Map<string,StatusOverride>()
     for (const e of PLAN_ENTRIES) {
@@ -1392,6 +1603,7 @@ export default function GodišnjiPlan() {
         </button>
       </div>
       {showPrint && <PrintModal rows={allRows} onClose={() => setShowPrint(false)} />}
+      {selectedOdjel && <OdjelDetailModal gj={selectedOdjel.gj} odjel={selectedOdjel.odjel} onClose={() => setSelectedOdjel(null)} />}
 
       {/* Filters */}
       <div className="flex flex-wrap items-start gap-4">
@@ -1479,12 +1691,12 @@ export default function GodišnjiPlan() {
       {filteredRows.length===0
         ? <div className="text-center py-12 text-sm text-gray-400 dark:text-gray-500">Nema odjela za odabrane filtere.</div>
         : activeTab==='grupe'
-          ? <PoGrupama rows={filteredRows} onStatus={handleStatus} />
+          ? <PoGrupama rows={filteredRows} onStatus={handleStatus} onOdjelClick={handleOdjelClick} />
           : activeTab==='sortimenti'
-          ? <PoSortimentima rows={filteredRows} onStatus={handleStatus} totals={totals} />
+          ? <PoSortimentima rows={filteredRows} onStatus={handleStatus} onOdjelClick={handleOdjelClick} totals={totals} />
           : activeTab==='pregled'
-          ? <PregledPlana rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} onStatus={handleStatus} />
-          : <PlanPoProjaktu rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} />
+          ? <PregledPlana rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} onStatus={handleStatus} onOdjelClick={handleOdjelClick} />
+          : <PlanPoProjaktu rows={allRows.filter(r => gjFilter==='sve' || r.gj===gjFilter)} onOdjelClick={handleOdjelClick} />
       }
     </div>
   )
