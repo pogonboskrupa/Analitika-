@@ -61,6 +61,26 @@ export default function Dashboard() {
 
   const periodLabel = `Posljednjih ${sortDays} dan${sortDays === 1 ? '' : 'a'}`
 
+  const DAYS_BS = ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub']
+  const fmtDate = (d: Date) => {
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const yyyy = d.getFullYear()
+    return `${dd}.${mm}.${yyyy} (${DAYS_BS[d.getDay()]})`
+  }
+
+  // Actual date range from data that has sječa or otprema
+  const periodRange = useMemo(() => {
+    const dates = [
+      ...periodPrimka.filter(r => r.ukupno > 0).map(r => r.datum),
+      ...periodOtprema.filter(r => r.ukupno > 0).map(r => r.datum),
+    ]
+    if (!dates.length) return null
+    const min = new Date(Math.min(...dates.map(d => d.getTime())))
+    const max = new Date(Math.max(...dates.map(d => d.getTime())))
+    return { min, max }
+  }, [periodPrimka, periodOtprema])
+
   if (error) return <ErrorCard message={error} onRetry={refetch} />
 
   return (
@@ -100,7 +120,13 @@ export default function Dashboard() {
               Sječa i otprema po sortimentima
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {periodLabel} &mdash; sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa
+              {periodLabel}
+              {periodRange && (
+                <> &mdash; <span className="font-medium text-gray-700 dark:text-gray-300">{fmtDate(periodRange.min)}</span>
+                {' → '}
+                <span className="font-medium text-gray-700 dark:text-gray-300">{fmtDate(periodRange.max)}</span></>
+              )}
+              {' '}&mdash; sječa: {periodPrimka.length} primki, otprema: {periodOtprema.length} zapisa
             </p>
             <SortimentiTable sjeca={sjecaSortimenti} otprema={otpremaSortimenti} />
           </div>
