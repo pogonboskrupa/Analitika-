@@ -117,7 +117,7 @@ export function parseZalihaOdjeli(csv: string[][]): ZalihaOdjel[] {
     const r2 = csv[i + 2]
     const r3 = csv[i + 3]
     const r4 = csv[i + 4]
-    if (!r1 || !r2 || !r3 || !r4) { i += 6; continue }
+    if (!r1 || !r2 || !r3 || !r4) { i += 5; continue }
     result.push({
       odjel:         (r0[1] ?? '').trim(),
       radiliste:     (r1[1] ?? '').trim(),
@@ -129,7 +129,10 @@ export function parseZalihaOdjeli(csv: string[][]): ZalihaOdjel[] {
       otprema:  parseZVals(r3),
       zaliha:   parseZVals(r4),
     })
-    i += 6
+    // Advance past the 5 data rows; the empty separator (row 6) is already
+    // filtered out by parseCsvText, so each block occupies exactly 5 rows.
+    // If somehow the separator is present, the outer i++ will skip it.
+    i += 5
   }
   return result
 }
