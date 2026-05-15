@@ -25,7 +25,6 @@ interface PlanEntry {
   dzgo:     number   // plan prostorna masa č (= cel.d+cel.c+šk)
   lTrupci:  number
   cijepano: number   // plan prostorna masa l (= ogr.d+ogr.c+gule)
-  multiGJ?: boolean
 }
 
 // Actual broken down into 8 individual sortiments
@@ -64,7 +63,7 @@ const PLAN_ENTRIES: PlanEntry[] = [
   { gj:'Risovac Krupa', odjel:'56',   bruto:3877,  neto:3206, cTrupci:1779, dzgo:263, lTrupci:439,  cijepano:725  },
   { gj:'Risovac Krupa', odjel:'59/1', bruto:3724,  neto:3087, cTrupci:1545, dzgo:208, lTrupci:658,  cijepano:676  },
   { gj:'Risovac Krupa', odjel:'63',   bruto:4033,  neto:3339, cTrupci:1309, dzgo:236, lTrupci:796,  cijepano:998  },
-  { gj:'Risovac Krupa', odjel:'66',   bruto:2645,  neto:2307, cTrupci:0,    dzgo:52,  lTrupci:949,  cijepano:1307, multiGJ:true },
+  { gj:'Risovac Krupa', odjel:'66',   bruto:2645,  neto:2307, cTrupci:0,    dzgo:52,  lTrupci:949,  cijepano:1307 },
   { gj:'Risovac Krupa', odjel:'68/2', bruto:2605,  neto:2287, cTrupci:35,   dzgo:6,   lTrupci:1012, cijepano:1234 },
   { gj:'Risovac Krupa', odjel:'71P',  bruto:1957,  neto:1655, cTrupci:664,  dzgo:114, lTrupci:401,  cijepano:476  },
   { gj:'Risovac Krupa', odjel:'97',   bruto:4889,  neto:4058, cTrupci:1253, dzgo:236, lTrupci:901,  cijepano:1668 },
@@ -76,7 +75,7 @@ const PLAN_ENTRIES: PlanEntry[] = [
   { gj:'Grmeč Jasenica', odjel:'60',    bruto:3551, neto:3061, cTrupci:295, dzgo:65,  lTrupci:1050, cijepano:1651 },
   { gj:'Grmeč Jasenica', odjel:'61',    bruto:4774, neto:4105, cTrupci:454, dzgo:102, lTrupci:1393, cijepano:2156 },
   { gj:'Grmeč Jasenica', odjel:'64/2P', bruto:996,  neto:608,  cTrupci:13,  dzgo:23,  lTrupci:211,  cijepano:361  },
-  { gj:'Grmeč Jasenica', odjel:'66',    bruto:5339, neto:4493, cTrupci:0,   dzgo:0,   lTrupci:1025, cijepano:3468, multiGJ:true },
+  { gj:'Grmeč Jasenica', odjel:'66',    bruto:5339, neto:4493, cTrupci:0,   dzgo:0,   lTrupci:1025, cijepano:3468 },
   { gj:'Grmeč Jasenica', odjel:'67',    bruto:4853, neto:4199, cTrupci:0,   dzgo:0,   lTrupci:1530, cijepano:2669 },
   { gj:'Grmeč Jasenica', odjel:'69P',   bruto:1309, neto:1204, cTrupci:82,  dzgo:32,  lTrupci:390,  cijepano:700  },
   { gj:'Grmeč Jasenica', odjel:'85P',   bruto:678,  neto:418,  cTrupci:0,   dzgo:73,  lTrupci:25,   cijepano:320  },
@@ -361,7 +360,7 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
                       <tr key={`${gj}-${row.odjel}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                         <td className="px-3 py-2 text-gray-400 text-xs tabular-nums">{i+1}</td>
                         <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                          {row.odjel}{row.multiGJ && <sup className="text-gray-400 text-xs ml-0.5">*</sup>}
+                          {row.odjel}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -438,7 +437,7 @@ function PoGrupama({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:str
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          Cjepano Č plan = Cel.duga + Cel.cijepana + Škart · Cjepano L plan = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 nastupa u dvije GJ (Risovac Krupa + Grmeč Jasenica)
+          Cjepano Č plan = Cel.duga + Cel.cijepana + Škart · Cjepano L plan = Ogr.dugo + Ogr.cijepano + Gule
         </p>
       </div>
     </div>
@@ -579,7 +578,7 @@ function PoSortimentima({ rows, onStatus, totals }: {
                     <td className="px-3 py-2 text-gray-400 text-xs tabular-nums">{idx+1}</td>
                     <td className="px-3 py-2 text-xs font-medium whitespace-nowrap" style={{ color:GJ_COLOR[row.gj] }}>{row.gj}</td>
                     <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                      {row.odjel}{row.multiGJ&&<sup className="text-gray-400 text-xs ml-0.5">*</sup>}
+                      {row.odjel}
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -630,7 +629,7 @@ function PoSortimentima({ rows, onStatus, totals }: {
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          * Odjel 66 nastupa u dvije GJ (Risovac Krupa + Grmeč Jasenica)
+          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule
         </p>
       </div>
     </div>
@@ -724,7 +723,7 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
                         className={cn('border-b border-gray-100 dark:border-gray-800 transition-colors', rowBg[row.status])}>
                         <td className="px-3 py-2.5 text-gray-400 text-xs">{i+1}</td>
                         <td className="px-3 py-2.5 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                          {row.odjel}{row.multiGJ && <sup className="text-gray-400 text-xs ml-0.5">*</sup>}
+                          {row.odjel}
                         </td>
                         <td className="px-3 py-2.5 text-right text-gray-500 dark:text-gray-400">{f(row.bruto)}</td>
                         <td className="px-3 py-2.5 text-right font-medium text-gray-800 dark:text-gray-100">{f(row.neto)}</td>
@@ -773,8 +772,7 @@ function PregledPlana({ rows, onStatus }: { rows: OdjelRow[]; onStatus:(gj:GJ,o:
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 nastupa u dvije GJ
-        </p>
+          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule        </p>
       </div>
     </div>
   )
@@ -933,7 +931,7 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
                             : 'border-b border-blue-50 dark:border-gray-800/50 bg-slate-50 dark:bg-slate-800/30'}>
                             <td className="px-3 py-2 text-gray-400 text-xs" rowSpan={2}>{i+1}</td>
                             <td className="px-3 py-2 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap" rowSpan={2}>
-                              {row.odjel}{row.multiGJ && <sup className="text-gray-400 text-xs ml-0.5">*</sup>}
+                              {row.odjel}
                             </td>
                             <td className="px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-400 whitespace-nowrap">1. Projekat</td>
                             <td className="px-3 py-2 text-right">{f(proj?.trupciC ?? 0)}</td>
@@ -1011,8 +1009,7 @@ function PlanPoProjaktu({ rows }: { rows: OdjelRow[] }) {
           </table>
         </div>
         <p className="px-5 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · * Odjel 66 nastupa u dvije GJ
-        </p>
+          Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule        </p>
       </div>
 
       {/* Rekapitulacija */}
@@ -1183,7 +1180,7 @@ function PrintModal({ rows, onClose }: { rows: OdjelRow[]; onClose:()=>void }) {
               {gjRows.map((row, i) => (
                 <tr key={`pr-${gj}-${row.odjel}`} style={{ backgroundColor:rowBg(row.status) }}>
                   <td style={{ ...PRT_TD, textAlign:'center', color:'#9ca3af' }}>{i+1}</td>
-                  <td style={{ ...PRT_TD, fontWeight:600 }}>{row.odjel}{row.multiGJ?'*':''}</td>
+                  <td style={{ ...PRT_TD, fontWeight:600 }}>{row.odjel}</td>
                   <td style={{ ...PRT_TD, textAlign:'right', color:'#6b7280' }}>{formatNumber(row.bruto,0)}</td>
                   <td style={{ ...PRT_TD, textAlign:'right', fontWeight:700 }}>{formatNumber(row.neto,0)}</td>
                   <td style={{ ...PRT_TD, textAlign:'right' }}>{row.cTrupci>0?formatNumber(row.cTrupci,0):'—'}</td>
@@ -1232,8 +1229,7 @@ function PrintModal({ rows, onClose }: { rows: OdjelRow[]; onClose:()=>void }) {
         {/* Legend */}
         <div style={{ marginTop:'10px', paddingTop:'8px', borderTop:'1px solid #e5e7eb', fontSize:'10px', color:'#6b7280' }}>
           <p style={{ margin:'0 0 3px' }}>
-            Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · P = prelazni odjel · * odjel nastupa u dvije GJ
-          </p>
+            Cjepano Č = Cel.duga + Cel.cijepana + Škart · Cjepano L = Ogr.dugo + Ogr.cijepano + Gule · P = prelazni odjel          </p>
           <div style={{ display:'flex', gap:'14px', marginTop:'4px' }}>
             <span style={{ color:'#15803d' }}>■ Posječeno</span>
             <span style={{ color:'#b45309' }}>■ U sječi</span>
