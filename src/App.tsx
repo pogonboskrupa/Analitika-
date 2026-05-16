@@ -8,6 +8,7 @@ import Trendovi from './pages/Trendovi'
 import Otprema from './pages/Otprema'
 import Radilista from './pages/Radilista'
 import IzvođačDetail from './pages/IzvođačDetail'
+import Izvođači from './pages/Izvođači'
 import Kupci from './pages/Kupci'
 import KupacDetail from './pages/KupacDetail'
 import StanjeZaliha from './pages/StanjeZaliha'
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/otprema" element={<Otprema />} />
               <Route path="/radilista" element={<Radilista />} />
               <Route path="/radilista/izvođač/:id" element={<IzvođačDetail />} />
+              <Route path="/izvodjaci" element={<Izvođači />} />
               <Route path="/kupci" element={<Kupci />} />
               <Route path="/kupci/:id" element={<KupacDetail />} />
               <Route path="/zalihe" element={<StanjeZaliha />} />
