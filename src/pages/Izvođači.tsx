@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import {
-  getQuickSelectRange, filterByDateRange,
+  getYearRange, getAvailableYears, filterByDateRange,
   aggregateIzvođačSummary, formatNumber,
 } from '@/lib/utils'
 import type { DateRange, PrimkaRow } from '@/lib/types'
@@ -83,7 +83,8 @@ function aggregateIzvođačByMonth(rows: PrimkaRow[]) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Izvođači() {
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange]     = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange]     = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => getAvailableYears(primkaRows), [primkaRows])
   const [activeTab, setActiveTab] = useState<TabKey>('pregled')
 
   const filtered = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
@@ -110,7 +111,7 @@ export default function Izvođači() {
 
       {/* Shared date filter + tabs in one row */}
       <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 dark:border-gray-800 pb-4">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
       </div>
 

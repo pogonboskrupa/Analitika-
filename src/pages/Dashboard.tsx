@@ -8,7 +8,7 @@ import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange, getLastNDaysRange, filterByDateRange,
+  getYearRange, getAvailableYears, getLastNDaysRange, filterByDateRange,
 
   aggregatePrimacSummary, aggregateOdjelSummary, aggregateDailyTotals,
   getTotalUkupno, getTotalCetinari, getTotalLiscare,
@@ -37,7 +37,11 @@ function sumSortimenti(rows: PrimkaRow[] | OtpremaRow[]) {
 
 export default function Dashboard() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => {
+    const s = new Set([...primkaRows, ...otpremaRows].map(r => r.datum.getFullYear()))
+    return Array.from(s).sort((a, b) => b - a)
+  }, [primkaRows, otpremaRows])
 
   const [sortDays, setSortDays] = useState(7)
 
@@ -152,7 +156,7 @@ export default function Dashboard() {
 
           {/* Crveni filter — kontrolira stats kartice i grafove */}
           <div className="flex flex-wrap items-center gap-3">
-            <DateRangePicker value={range} onChange={setRange} />
+            <DateRangePicker value={range} onChange={setRange} years={availableYears} />
             <PrintButton />
           </div>
 

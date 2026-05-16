@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { format, subDays } from "date-fns";
-import { getLastNDaysRange } from "@/lib/utils";
+import { getLastNDaysRange, getYearRange } from "@/lib/utils";
 import type { DateRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface DateRangePickerProps {
   value: DateRange;
   onChange: (range: DateRange) => void;
+  years?: number[];
 }
 
 const QUICK_DAYS = [1, 2, 3, 4, 5, 6, 7, 10, 30];
@@ -27,13 +28,27 @@ function getYesterday(): Date {
   return subDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1);
 }
 
-export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
+function matchesYear(value: DateRange, year: number): boolean {
+  const start = new Date(year, 0, 1);
+  if (value.from.getTime() !== start.getTime()) return false;
+  const end = new Date(year, 11, 31);
+  // current year: to should be yesterday or today
+  const diffMs = Math.abs(value.to.getTime() - end.getTime());
+  const diffMs2 = Math.abs(value.to.getTime() - getYesterday().getTime());
+  return diffMs < 86400000 * 2 || (year === new Date().getFullYear() && diffMs2 < 86400000 * 2);
+}
+
+export function DateRangePicker({ value, onChange, years }: DateRangePickerProps) {
   const [activeDay, setActiveDay] = useState<number | null>(null);
-  const yesterday = getYesterday();
 
   function handleQuick(days: number) {
     setActiveDay(days);
     onChange(getLastNDaysRange(days));
+  }
+
+  function handleYear(year: number) {
+    setActiveDay(null);
+    onChange(getYearRange(year));
   }
 
   function handleFromChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -52,10 +67,38 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
     }
   }
 
+  const yesterday = getYesterday();
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
-        {/* Quick select buttons */}
+        {/* Year buttons */}
+        {years && years.length > 0 && (
+          <>
+            <div className="flex items-center gap-1">
+              {years.map((y) => {
+                const active = matchesYear(value, y);
+                return (
+                  <button
+                    key={y}
+                    onClick={() => handleYear(y)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150",
+                      active
+                        ? "bg-forest-600 text-white border-forest-600 dark:bg-forest-500 dark:border-forest-500"
+                        : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-forest-400 hover:text-forest-600 dark:hover:text-forest-400"
+                    )}
+                  >
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-gray-300 dark:text-gray-600 select-none">|</span>
+          </>
+        )}
+
+        {/* Quick select day buttons */}
         <div className="flex items-center gap-1">
           {QUICK_DAYS.map((d) => (
             <button

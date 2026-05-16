@@ -7,7 +7,7 @@ import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
 import { VolumeBarChart } from '@/components/charts/VolumeBarChart'
 import {
-  getQuickSelectRange,
+  getYearRange, getAvailableYears,
   filterByDateRange,
   aggregateOdjelSummary,
   aggregateDailyTotals,
@@ -22,12 +22,13 @@ export default function PrimacDetail() {
   const { id } = useParams<{ id: string }>()
   const primacName = id ? decodeURIComponent(id) : ''
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
 
   const primacRows: PrimkaRow[] = useMemo(
     () => primkaRows.filter((r) => r.primac === primacName),
     [primkaRows, primacName]
   )
+  const availableYears = useMemo(() => getAvailableYears(primacRows), [primacRows])
 
   const filtered = useMemo(() => filterByDateRange(primacRows, range), [primacRows, range])
 
@@ -78,7 +79,7 @@ export default function PrimacDetail() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
       </div>
 

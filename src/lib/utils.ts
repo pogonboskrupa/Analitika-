@@ -44,6 +44,18 @@ export function getLastNDaysRange(n: number): DateRange {
   return { from: subDays(yesterday, n - 1), to: yesterday };
 }
 
+export function getYearRange(year: number): DateRange {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const to = year === today.getFullYear() ? subDays(today, 1) : new Date(year, 11, 31);
+  return { from: new Date(year, 0, 1), to };
+}
+
+export function getAvailableYears(rows: { datum: Date }[]): number[] {
+  const s = new Set(rows.map(r => r.datum.getFullYear()));
+  return Array.from(s).sort((a, b) => b - a);
+}
+
 export function dateRangeToParams(range: DateRange): string {
   return `from=${format(range.from, "yyyy-MM-dd")}&to=${format(range.to, "yyyy-MM-dd")}`;
 }

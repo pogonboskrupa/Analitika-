@@ -5,7 +5,7 @@ import { PrintButton } from '@/components/PrintButton'
 import { StatsCard } from '@/components/StatsCard'
 import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import {
-  getQuickSelectRange, filterByDateRange,
+  getYearRange, getAvailableYears, filterByDateRange,
   aggregateDailyTotals, aggregateOtpremaDailyTotals,
   getTotalUkupno, formatNumber,
   aggregatePeriodTotals, aggregateSortimentiByPeriod,
@@ -37,7 +37,11 @@ const ALL_SORT_KEYS: SortKey[] = [
 
 export default function Trendovi() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => {
+    const s = new Set([...primkaRows, ...otpremaRows].map(r => r.datum.getFullYear()))
+    return Array.from(s).sort((a, b) => b - a)
+  }, [primkaRows, otpremaRows])
   const [periodView, setPeriodView] = useState<PeriodView>('mjesecno')
   const [dataSource, setDataSource] = useState<DataSource>('sjeca')
 
@@ -105,7 +109,7 @@ export default function Trendovi() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
         <PrintButton />
       </div>

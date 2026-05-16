@@ -6,7 +6,7 @@ import { StatsCard } from '@/components/StatsCard'
 import { VolumeBarChart } from '@/components/charts/VolumeBarChart'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange,
+  getYearRange, getAvailableYears,
   filterByDateRange,
   aggregateKupacSummary,
   getTotalOtpremaUkupno,
@@ -18,7 +18,8 @@ import type { DateRange } from '@/lib/types'
 
 export default function Kupci() {
   const { otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => getAvailableYears(otpremaRows), [otpremaRows])
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])
@@ -57,7 +58,7 @@ export default function Kupci() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
         <PrintButton />
       </div>

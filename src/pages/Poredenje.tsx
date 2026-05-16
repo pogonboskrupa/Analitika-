@@ -6,7 +6,7 @@ import {
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
 import { PrintButton } from '@/components/PrintButton'
-import { getQuickSelectRange, filterByDateRange, formatNumber } from '@/lib/utils'
+import { getYearRange, getAvailableYears, filterByDateRange, formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { DateRange, PrimkaRow } from '@/lib/types'
 
@@ -299,7 +299,8 @@ function SortimentTable({ data, nameLabel, displayKeys, species }: {
 
 export default function Poredenje() {
   const { primkaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => getAvailableYears(primkaRows), [primkaRows])
   const [species, setSpecies] = useState<Species>('sve')
   const [selectedOdjel, setSelectedOdjel] = useState<string>('')
 
@@ -357,7 +358,7 @@ export default function Poredenje() {
 
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
         <PrintButton />
       </div>

@@ -4,7 +4,7 @@ import { DateRangePicker } from '@/components/DateRangePicker'
 import { StatsCard } from '@/components/StatsCard'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange, filterByDateRange,
+  getYearRange, getAvailableYears, filterByDateRange,
   getTotalUkupno, getTotalCetinari, getTotalLiscare,
   getTotalOtpremaUkupno, getTotalOtpremaCetinari, getTotalOtpremaLiscare,
   formatNumber,
@@ -46,7 +46,11 @@ function sumOtpremaField(rows: OtpremaRow[], key: keyof OtpremaRow): number {
 
 export default function StanjeZaliha() {
   const { primkaRows, otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => {
+    const s = new Set([...primkaRows, ...otpremaRows].map(r => r.datum.getFullYear()))
+    return Array.from(s).sort((a, b) => b - a)
+  }, [primkaRows, otpremaRows])
 
   const filteredPrimka = useMemo(() => filterByDateRange(primkaRows, range), [primkaRows, range])
   const filteredOtprema = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])
@@ -94,7 +98,7 @@ export default function StanjeZaliha() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
         <PrintButton />
       </div>

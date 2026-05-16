@@ -7,7 +7,7 @@ import { OdjelPieChart } from '@/components/charts/OdjelPieChart'
 import { TrendLineChart } from '@/components/charts/TrendLineChart'
 import { PrintButton } from '@/components/PrintButton'
 import {
-  getQuickSelectRange,
+  getYearRange, getAvailableYears,
   filterByDateRange,
   aggregateOtpremacSummary,
   aggregateOtpremaDailyTotals,
@@ -20,7 +20,8 @@ import type { DateRange } from '@/lib/types'
 
 export default function Otprema() {
   const { otpremaRows, loading, error, refetch } = useSheet()
-  const [range, setRange] = useState<DateRange>(() => getQuickSelectRange('ytd'))
+  const [range, setRange] = useState<DateRange>(() => getYearRange(new Date().getFullYear()))
+  const availableYears = useMemo(() => getAvailableYears(otpremaRows), [otpremaRows])
 
   const filteredOtprema = useMemo(() => filterByDateRange(otpremaRows, range), [otpremaRows, range])
 
@@ -65,7 +66,7 @@ export default function Otprema() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} years={availableYears} />
         {loading && <span className="text-xs text-gray-400 animate-pulse">Učitavanje...</span>}
         <PrintButton />
       </div>
