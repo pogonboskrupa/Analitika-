@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { useSheet } from '@/context/SheetContext'
 import { DateRangePicker } from '@/components/DateRangePicker'
@@ -14,12 +14,30 @@ import {
 } from 'recharts'
 import { cn } from '@/lib/utils'
 
-type TabKey = 'pregled' | 'trend' | 'primaci' | 'odjeli'
+type TabKey = 'pregled' | 'trend' | 'primaci' | 'odjeli' | 'sortimenti'
 
 const PALETTE = [
   '#16a34a','#2563eb','#dc2626','#d97706','#7c3aed',
   '#0891b2','#be185d','#65a30d','#ea580c','#6366f1',
   '#0d9488','#9333ea',
+]
+
+const SORT_DEFS = [
+  { label: 'FL četinari',        group: 'Četinari' as const, key: 'fl_c' as keyof PrimkaRow },
+  { label: 'I kl. četinari',     group: 'Četinari' as const, key: 'i_c' as keyof PrimkaRow },
+  { label: 'II kl. četinari',    group: 'Četinari' as const, key: 'ii_c' as keyof PrimkaRow },
+  { label: 'III kl. četinari',   group: 'Četinari' as const, key: 'iii_c' as keyof PrimkaRow },
+  { label: 'Rudničko drvo',      group: 'Četinari' as const, key: 'rd_c' as keyof PrimkaRow },
+  { label: 'Celuloza duga',      group: 'Četinari' as const, key: 'cel_duga' as keyof PrimkaRow },
+  { label: 'Celuloza cijepana',  group: 'Četinari' as const, key: 'cel_cijepana' as keyof PrimkaRow },
+  { label: 'Škart',              group: 'Četinari' as const, key: 'skart' as keyof PrimkaRow },
+  { label: 'FL lišćari',         group: 'Lišćari' as const,  key: 'fl_l' as keyof PrimkaRow },
+  { label: 'I kl. lišćari',      group: 'Lišćari' as const,  key: 'i_l' as keyof PrimkaRow },
+  { label: 'II kl. lišćari',     group: 'Lišćari' as const,  key: 'ii_l' as keyof PrimkaRow },
+  { label: 'III kl. lišćari',    group: 'Lišćari' as const,  key: 'iii_l' as keyof PrimkaRow },
+  { label: 'Ogrevno dugo',       group: 'Lišćari' as const,  key: 'ogr_dugi' as keyof PrimkaRow },
+  { label: 'Ogrevno cijepano',   group: 'Lišćari' as const,  key: 'ogr_cijepani' as keyof PrimkaRow },
+  { label: 'Gule',               group: 'Lišćari' as const,  key: 'gule' as keyof PrimkaRow },
 ]
 
 // ── Aggregation helpers ───────────────────────────────────────────────────────
@@ -119,8 +137,9 @@ export default function Izvođači() {
         {([
           { id: 'pregled',  label: 'Pregled' },
           { id: 'trend',    label: 'Trend po mjesecu' },
-          { id: 'primaci',  label: 'Po primačima' },
-          { id: 'odjeli',   label: 'Po odjelima' },
+          { id: 'primaci',     label: 'Po primačima' },
+          { id: 'odjeli',      label: 'Po odjelima' },
+          { id: 'sortimenti',  label: 'Po sortimentima' },
         ] as const).map(({ id, label }) => (
           <button key={id} onClick={() => setActiveTab(id)}
             className={cn('px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
@@ -133,10 +152,11 @@ export default function Izvođači() {
         ))}
       </div>
 
-      {activeTab === 'pregled' && <PregledTab filtered={filtered} summary={summary} maxVol={maxVol} />}
-      {activeTab === 'trend'   && <TrendTab trendData={trendData} />}
-      {activeTab === 'primaci' && <PrimaciTab filtered={filtered} />}
-      {activeTab === 'odjeli'  && <OdjeliTab filtered={filtered} />}
+      {activeTab === 'pregled'    && <PregledTab filtered={filtered} summary={summary} maxVol={maxVol} />}
+      {activeTab === 'trend'      && <TrendTab trendData={trendData} />}
+      {activeTab === 'primaci'    && <PrimaciTab filtered={filtered} />}
+      {activeTab === 'odjeli'     && <OdjeliTab filtered={filtered} />}
+      {activeTab === 'sortimenti' && <SortimentiTab filtered={filtered} />}
     </div>
   )
 }
@@ -544,6 +564,155 @@ function OdjeliTab({ filtered }: { filtered: PrimkaRow[] }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Po sortimentima tab ───────────────────────────────────────────────────────
+function SortimentiTab({ filtered }: { filtered: PrimkaRow[] }) {
+  // izvođači sorted by total volume desc
+  const izvođači = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of filtered) {
+      const iz = r.izvođač || '—'
+      m.set(iz, (m.get(iz) ?? 0) + r.ukupno)
+    }
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]).map(([n]) => n)
+  }, [filtered])
+
+  // pivot[sortKey][izvođač] = summed m³
+  const pivot = useMemo(() => {
+    const p: Record<string, Record<string, number>> = {}
+    for (const d of SORT_DEFS) p[d.key as string] = {}
+    for (const r of filtered) {
+      const iz = r.izvođač || '—'
+      for (const d of SORT_DEFS) {
+        const v = (r[d.key] as number) || 0
+        const k = d.key as string
+        p[k][iz] = (p[k][iz] ?? 0) + v
+      }
+    }
+    return p
+  }, [filtered])
+
+  function rowTotal(key: string) {
+    return izvođači.reduce((s, iz) => s + (pivot[key]?.[iz] ?? 0), 0)
+  }
+  function groupSum(group: 'Četinari' | 'Lišćari', iz: string) {
+    return SORT_DEFS.filter(d => d.group === group).reduce((s, d) => s + (pivot[d.key as string]?.[iz] ?? 0), 0)
+  }
+  function izvođačTotal(iz: string) {
+    return SORT_DEFS.reduce((s, d) => s + (pivot[d.key as string]?.[iz] ?? 0), 0)
+  }
+
+  function doExport() {
+    const rows: (string | number)[][] = [['Sortiment', 'Grupa', ...izvođači, 'Ukupno']]
+    for (const d of SORT_DEFS) {
+      const total = rowTotal(d.key as string)
+      if (total === 0) continue
+      rows.push([d.label, d.group, ...izvođači.map(iz => +(pivot[d.key as string]?.[iz] ?? 0).toFixed(2)), +total.toFixed(2)])
+    }
+    exportCsv('izvodjaci_sortimenti', rows)
+  }
+
+  if (filtered.length === 0) return (
+    <p className="text-center py-16 text-sm text-gray-400">Nema podataka za odabrani period.</p>
+  )
+
+  const groups = ['Četinari', 'Lišćari'] as const
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <button onClick={doExport}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:border-green-300 hover:text-green-700 dark:hover:bg-green-900/20 dark:hover:text-green-400 transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+          Export CSV
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
+                <th className="px-3 py-2.5 text-left font-semibold text-gray-600 dark:text-gray-300 sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 whitespace-nowrap min-w-40">Sortiment</th>
+                {izvođači.map((iz, i) => (
+                  <th key={iz} className="px-3 py-2.5 text-right font-medium whitespace-nowrap" style={{ color: PALETTE[i % PALETTE.length] }}>
+                    {iz}
+                  </th>
+                ))}
+                <th className="px-3 py-2.5 text-right font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Ukupno</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map(group => {
+                const defs = SORT_DEFS.filter(d => d.group === group)
+                const activeRows = defs.filter(d => rowTotal(d.key as string) > 0)
+                if (activeRows.length === 0) return null
+                const isC = group === 'Četinari'
+                const groupColor = isC ? '#1d4ed8' : '#b45309'
+                const groupBg = isC ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-amber-50 dark:bg-amber-900/20'
+                const subtotalBorder = isC ? 'border-blue-200 dark:border-blue-800' : 'border-amber-200 dark:border-amber-800'
+                return (
+                  <Fragment key={group}>
+                    {/* Group header */}
+                    <tr className={groupBg}>
+                      <td colSpan={izvođači.length + 2} className="px-3 py-1.5 font-bold uppercase tracking-wider text-xs sticky left-0"
+                        style={{ color: groupColor }}>
+                        {group}
+                      </td>
+                    </tr>
+                    {/* Sortiment rows */}
+                    {activeRows.map((def, ri) => {
+                      const total = rowTotal(def.key as string)
+                      return (
+                        <tr key={def.key as string} className={cn(
+                          'divide-y-0 border-b border-gray-50 dark:border-gray-800/50',
+                          ri % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50 dark:bg-slate-800/30'
+                        )}>
+                          <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300 sticky left-0 bg-inherit whitespace-nowrap">{def.label}</td>
+                          {izvođači.map(iz => {
+                            const v = pivot[def.key as string]?.[iz] ?? 0
+                            return (
+                              <td key={iz} className="px-3 py-2 text-right tabular-nums">
+                                {v > 0
+                                  ? <span className="text-gray-800 dark:text-gray-200">{formatNumber(v, 0)}</span>
+                                  : <span className="text-gray-300 dark:text-gray-700">—</span>}
+                              </td>
+                            )
+                          })}
+                          <td className="px-3 py-2 text-right tabular-nums font-semibold text-gray-900 dark:text-gray-100">{formatNumber(total, 0)}</td>
+                        </tr>
+                      )
+                    })}
+                    {/* Group subtotal */}
+                    <tr className={cn('font-bold border-t-2', subtotalBorder, groupBg)} style={{ color: groupColor }}>
+                      <td className="px-3 py-2 sticky left-0 bg-inherit whitespace-nowrap">Ukupno {group}</td>
+                      {izvođači.map(iz => (
+                        <td key={iz} className="px-3 py-2 text-right tabular-nums">{formatNumber(groupSum(group, iz), 0)}</td>
+                      ))}
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {formatNumber(defs.reduce((s, d) => s + rowTotal(d.key as string), 0), 0)}
+                      </td>
+                    </tr>
+                  </Fragment>
+                )
+              })}
+              {/* Grand total */}
+              <tr className="bg-gray-800 dark:bg-gray-700 text-white font-bold text-sm border-t-2 border-gray-600">
+                <td className="px-3 py-3 sticky left-0 bg-gray-800 dark:bg-gray-700 whitespace-nowrap">UKUPNO</td>
+                {izvođači.map(iz => (
+                  <td key={iz} className="px-3 py-3 text-right tabular-nums">{formatNumber(izvođačTotal(iz), 0)}</td>
+                ))}
+                <td className="px-3 py-3 text-right tabular-nums">
+                  {formatNumber(izvođači.reduce((s, iz) => s + izvođačTotal(iz), 0), 0)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
